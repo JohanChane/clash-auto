@@ -1,0 +1,100 @@
+#port: 7890
+#socks-port: 7891
+#redir-port: 7892
+#tproxy-port: 7893
+mixed-port: 7890
+
+#authentication:
+# - "user1:pass1"
+# - "user2:pass2"
+
+allow-lan: false
+bind-address: '*'
+mode: rule
+log-level: info
+ipv6: false
+
+external-controller: 127.0.0.1:9090
+external-ui: yacd
+
+#secret: ""
+
+#interface-name: en0
+
+hosts:
+  #'*.clash.dev': 127.0.0.1
+  #'.dev': 127.0.0.1
+  #'alpha.clash.dev': '::1'
+
+profile:
+  store-selected: true
+
+# ## tun
+dns:
+  enable: true
+  listen: 0.0.0.0:53
+  ipv6: false
+  default-nameserver:
+    - 119.29.29.29
+    #- 223.5.5.5
+    #- 180.76.76.76
+    - 114.114.114.114
+    #- 8.8.8.8
+  enhanced-mode: fake-ip
+  nameserver:
+    - 119.29.29.29
+    #- 223.5.5.5
+    #- 180.76.76.76
+    - 114.114.114.114
+    #- 8.8.8.8
+    - tls://dns.rubyfish.cn:853 # DNS over TLS
+    - https://1.1.1.1/dns-query # DNS over HTTPS
+    - dhcp://en0 # dns from dhcp
+  fallback:
+      - https://8888.google/dns-query
+      - https://1.0.0.1/dns-query
+      - https://dns.twnic.tw/dns-query
+      - https://doh.opendns.com/dns-query
+      - https://dns-nyc.aaflalo.me/dns-query
+      - https://dns.aa.net.uk/dns-query
+      - https://sg.adhole.org/dns-query
+      - https://kaitain.restena.lu/dns-query
+      - https://hydra.plan9-ns1.com/dns-query
+      - https://jp.tiar.app/dns-query
+      - https://doh.asia.dnswarden.com/adblock
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+    ipcidr:
+      - 0.0.0.0/8
+      - 10.0.0.0/8
+      - 100.64.0.0/10
+      - 127.0.0.0/8
+      - 169.254.0.0/16
+      - 172.16.0.0/12
+      - 192.0.0.0/24
+      - 192.0.2.0/24
+      - 192.88.99.0/24
+      - 192.168.0.0/16
+      - 198.18.0.0/15
+      - 198.51.100.0/24
+      - 203.0.113.0/24
+      - 224.0.0.0/4
+      - 240.0.0.0/4
+      - 255.255.255.255/32
+    domain:
+      - '+.google.com'
+      - '+.facebook.com'
+      - '+.youtube.com'
+      - "+.github.com"
+      - "+.githubusercontent.com"
+      - "+.googlevideo.com"
+
+tun:
+  enable: true
+  stack: system # or gvisor
+  dns-hijack:
+    - any:53
+    - tcp://any:53
+  auto-route: true
+  auto-detect-interface: true # conflict with interface-name
