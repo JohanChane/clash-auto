@@ -47,6 +47,12 @@
 
 浏览器访问 http://127.0.0.1:9090/ui 即可。
 
+## Q&A
+
+Q: 如果 clash 客户端可以连上服务端, 但是无法翻墙?
+
+A: 设置 Windows 防火墙, 使 clash.exe 允许通过防火墙。
+
 ## Screenshots
 
 ![](./screenshots/clashauto.png)

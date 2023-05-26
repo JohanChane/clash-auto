@@ -47,6 +47,12 @@ After double-clicking `clashauto.bat`, you will see the following options:
 
 Access http://127.0.0.1:9090/ui in your browser to use the client.
 
+## Q&A
+
+Q: What should I do if the clash client can connect to the server, but cannot access blocked content?
+
+A: You may need to configure Windows Firewall to allow clash.exe to access the internet.
+
 ## Screenshots
 
 ![](./screenshots/clashauto.png)
