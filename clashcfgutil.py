@@ -27,7 +27,7 @@ def update_res(sections, cfg_dir, profile_dir, *, profile_name, profile_url=None
         #response = session.get(cfg_url)
         with session.get(profile_url) as response:
             yaml_data = ruamel.yaml.safe_load(response.content.decode("utf-8"))
-            if yaml_data.get("proxy_groups") or yaml_data.get("proxies"):
+            if yaml_data.get("proxy-groups") or yaml_data.get("proxies"):
                 with open(profile_path, "wb") as f:
                     f.write(response.content)
                 print(f'Updated cfg successfully: "{profile_path}", "{profile_url}"')
