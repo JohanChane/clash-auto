@@ -53,7 +53,7 @@
     选择该选项后会将 url 的内容保存到 profiles/example.yaml, 且更新该配置依赖的资源。更新成功后, 用户在 select_profile 选项中选择该配置即可。
     
 -   select_profile: 表示选择一个 `profile` 和 `basic_clash_config.yaml` 合并到 `final_clash_config.yaml`。同时重启 clash 服务使配置文件生效。
--   restart/stop/config/install/uninstall: 都是用于操作 clash 服务。
+-   restart/stop/config/install/uninstall clash_service: 都是用于操作 clash 服务。
 -   test_config: 测试 `final_clash_config.yaml` 配置文件。
 -   create_yaml: 用于根据 Clash 模板配置文件生成新的配置文件。
 -   uwp_loopback: 允许应用程序在本地回环地址（loopback address）上进行网络通信。为了增强应用程序的安全性，Microsoft 在默认情况下禁用了微软商店的应用在本地回环地址上进行网络通信的功能。

@@ -79,7 +79,8 @@ def main():
         basic_yaml_data = ruamel.yaml.safe_load(f)
     proxy = get_proxy(basic_yaml_data)
 
-    options = ["update_final_config", "update_profile", "select_profile", "restart", "stop", "config", "install", "uninstall", \
+    options = ["update_final_config", "update_profile", "select_profile", "restart_clash_service", \
+               "stop_clash_service", "config_clash_service", "install_clash_service", "uninstall_clash_service", \
                "test_config", "create_yaml", "uwp_loopback", "restart_clash_auto", "exit"]
     while True:
         print()
@@ -132,16 +133,17 @@ def main():
 
             clash_server_ctl(ServerCmd.RESTART)
 
-        elif choiced_option == "restart":
+        elif choiced_option == "restart_clash_service":
             clash_server_ctl(ServerCmd.RESTART)
-        elif choiced_option == "stop":
+        elif choiced_option == "stop_clash_service":
             clash_server_ctl(ServerCmd.STOP)
-        elif choiced_option == "config":
+        elif choiced_option == "config_clash_service":
             clash_server_ctl(ServerCmd.CONFIG)
             clash_server_ctl(ServerCmd.RESTART)
-        elif choiced_option == "install":
+        elif choiced_option == "install_clash_service":
             clash_server_ctl(ServerCmd.INSTALL)
-        elif choiced_option == "uninstall":
+            clash_server_ctl(ServerCmd.RESTART)
+        elif choiced_option == "uninstall_clash_service":
             clash_server_ctl(ServerCmd.STOP)
             clash_server_ctl(ServerCmd.UNINSTALL)
         elif choiced_option == "test_config":
