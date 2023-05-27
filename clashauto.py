@@ -36,7 +36,13 @@ def select(options):
     for i, item in enumerate(options):
         print(i, item)
 
-    choice = int(input("Enter your choice (num): "))
+    try:
+        choice = int(input("Enter your choice (num): "))
+    except ValueError:
+        choice = len(options)
+    if choice < 0:
+        choice = len(options)
+
     return choice
 
 class ServerCmd(Enum):
@@ -70,12 +76,13 @@ def main():
     os.chdir(SCRIPT_PATH)
     
     with open(BASIC_CLASH_CONFIG_PATH, "r", encoding="utf-8") as f:
-        basic_yaml_data = ruamel.yaml.round_trip_load(f)
+        basic_yaml_data = ruamel.yaml.safe_load(f)
     proxy = get_proxy(basic_yaml_data)
 
     options = ["update_final_config", "update_profile", "select_profile", "restart", "stop", "config", "install", "uninstall", \
-               "test_config", "create_yaml", "uwp_loopback", "exit"]
+               "test_config", "create_yaml", "uwp_loopback", "restart_clash_auto", "exit"]
     while True:
+        print()
         choice = select(options)
         if choice >= len(options):
             print("Invalid selection, please try again")
@@ -117,8 +124,8 @@ def main():
             
             profile_path = os.path.join(PROFILE_DIR, profile_name)
             with open(profile_path, "r", encoding="utf-8") as f:
-                profile_yaml_data = ruamel.yaml.round_trip_load(f)
-            merged_yaml_data = clashutil.merge_yamls(basic_yaml_data, profile_yaml_data)
+                profile_yaml_data = ruamel.yaml.safe_load(f)
+            merged_yaml_data = clashutil.merge_profile(basic_yaml_data, profile_yaml_data)
             with open(FINAL_CLASH_CONFIG_PATH, "w", encoding="utf-8", newline="") as f:
                 ruamel.yaml.round_trip_dump(merged_yaml_data, f)
             print(f'Merged "{BASIC_CLASH_CONFIG_PATH}" and "{profile_path}" into "{FINAL_CLASH_CONFIG_PATH}"')
@@ -149,11 +156,13 @@ def main():
         elif choiced_option == "uwp_loopback":
             cmd = f'EnableLoopback.exe'
             os.system(cmd)
+        elif choiced_option == "restart_clash_auto":
+            exec = sys.executable
+            os.execl(exec, exec, * sys.argv)
         elif choiced_option == "exit":
             break;
         else:
             sys.stderr.write("Not match the option")
-        print()
 
 if __name__ == "__main__":
     main()

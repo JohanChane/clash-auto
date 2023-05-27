@@ -4,13 +4,16 @@ from ruamel.yaml.comments import CommentedMap
 from ruamel.yaml.comments import CommentedSeq
 import copy
 
-# This function merges two YAML data dictionaries.
-# The second YAML data dictionary `b_yaml_data` is merged into the first YAML data dictionary `a_yaml_data`.
-# If the two dictionaries have the same key, the value from `b_yaml_data` will overwrite the value from `a_yaml_data`.
-def merge_yamls(a_yaml_data, b_yaml_data):
+def merge_profile(basic_yaml_data, profile_yaml_data):
     merged_data = {}
-    merged_data.update(b_yaml_data)
-    merged_data.update(a_yaml_data)
+    for key, value in basic_yaml_data.items():
+        if key not in merged_data:
+            merged_data[key] = value
+    for key, value in profile_yaml_data.items():
+        if key not in ["proxy-groups", "proxy-providers", "proxies", "rules", "rule-providers"]:
+            continue
+        if key not in merged_data:
+            merged_data[key] = value
     return merged_data
     
 def create_yaml_base_on_tpl(proxy_urls, tpl_yaml_path, out_yaml_path):
@@ -20,7 +23,7 @@ def create_yaml_base_on_tpl(proxy_urls, tpl_yaml_path, out_yaml_path):
     #yaml.default_flow_style = False
 
     with open(tpl_yaml_path, "r", encoding="utf-8") as f:
-        tpl_yaml_data = ruamel.yaml.round_trip_load(f)
+        tpl_yaml_data = ruamel.yaml.safe_load(f)
 
     out_yaml_data = copy.deepcopy(tpl_yaml_data)
 
