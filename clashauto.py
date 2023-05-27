@@ -45,6 +45,7 @@ class ServerCmd(Enum):
     CONFIG = 3
     INSTALL = 4
     UNINSTALL = 5
+    TEST = 6
 
 def clash_server_ctl(server_cmd):
     os.chdir(SCRIPT_PATH)
@@ -59,6 +60,9 @@ def clash_server_ctl(server_cmd):
         cmd = f'nssm.exe install clash "{CLASH_CORE}" -d "{CFG_DIR}" -f "{FINAL_CLASH_CONFIG_PATH}"'
     elif server_cmd == ServerCmd.UNINSTALL:
         cmd = f"nssm.exe remove clash confirm"
+    elif server_cmd == ServerCmd.TEST:
+        cmd = f'{CLASH_CORE} -d "{CFG_DIR}" -f "{FINAL_CLASH_CONFIG_PATH}" -t'
+        print(cmd)
 
     os.system(cmd)
 
@@ -69,7 +73,8 @@ def main():
         basic_yaml_data = ruamel.yaml.round_trip_load(f)
     proxy = get_proxy(basic_yaml_data)
 
-    options = ["update_final_config", "update_profile", "select_profile", "restart", "stop", "config", "install", "uninstall", "exit"]
+    options = ["update_final_config", "update_profile", "select_profile", "restart", "stop", "config", "install", "uninstall", \
+               "test_config", "create_yaml", "uwp_loopback", "exit"]
     while True:
         choice = select(options)
         if choice >= len(options):
@@ -113,7 +118,7 @@ def main():
             profile_path = os.path.join(PROFILE_DIR, profile_name)
             with open(profile_path, "r", encoding="utf-8") as f:
                 profile_yaml_data = ruamel.yaml.round_trip_load(f)
-            merged_yaml_data = clashutil.merge_dict(profile_yaml_data, basic_yaml_data)
+            merged_yaml_data = clashutil.merge_yamls(basic_yaml_data, profile_yaml_data)
             with open(FINAL_CLASH_CONFIG_PATH, "w", encoding="utf-8", newline="") as f:
                 ruamel.yaml.round_trip_dump(merged_yaml_data, f)
             print(f'Merged "{BASIC_CLASH_CONFIG_PATH}" and "{profile_path}" into "{FINAL_CLASH_CONFIG_PATH}"')
@@ -132,6 +137,18 @@ def main():
         elif choiced_option == "uninstall":
             clash_server_ctl(ServerCmd.STOP)
             clash_server_ctl(ServerCmd.UNINSTALL)
+        elif choiced_option == "test_config":
+            clash_server_ctl(ServerCmd.TEST)
+        elif choiced_option == "create_yaml":
+            tpl_config_path = "tpl/tpl_clash_config.yaml"
+            tpl_out_config_path = "tpl/tpl_out_clash_config.yaml"
+            url_path = "tpl/proxy_provider_urls"
+            with open(url_path, "r", encoding="utf-8") as f:
+                urls = [r"{}".format(line.strip()) for line in f.readlines()]
+            clashutil.create_yaml_base_on_tpl(urls, tpl_config_path, tpl_out_config_path)
+        elif choiced_option == "uwp_loopback":
+            cmd = f'EnableLoopback.exe'
+            os.system(cmd)
         elif choiced_option == "exit":
             break;
         else:

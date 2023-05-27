@@ -1,20 +1,66 @@
+import sys
+import ruamel.yaml
 from ruamel.yaml.comments import CommentedMap
 from ruamel.yaml.comments import CommentedSeq
+import copy
 
-def merge_dict(a, b):
-    if isinstance(a, CommentedMap) and isinstance(b, CommentedMap):
-        for k, v in b.items():
-            if k in a:
-                a[k] = merge_dict(a[k], v)
-            else:
-                a[k] = v
-        return a
-    elif isinstance(a, CommentedSeq) and isinstance(b, CommentedSeq):
-        for i, v in enumerate(b):
-            if i < len(a):
-                a[i] = merge_dict(a[i], v)
-            else:
-                a.append(v)
-        return a
-    else:
-        return b
+# This function merges two YAML data dictionaries.
+# The second YAML data dictionary `b_yaml_data` is merged into the first YAML data dictionary `a_yaml_data`.
+# If the two dictionaries have the same key, the value from `b_yaml_data` will overwrite the value from `a_yaml_data`.
+def merge_yamls(a_yaml_data, b_yaml_data):
+    merged_data = {}
+    merged_data.update(b_yaml_data)
+    merged_data.update(a_yaml_data)
+    return merged_data
+    
+def create_yaml_base_on_tpl(proxy_urls, tpl_yaml_path, out_yaml_path):
+    yaml = ruamel.yaml.YAML()
+    #yaml.indent(mapping=2, sequence=4, offset=2)
+    #yaml.explicit_start = True
+    #yaml.default_flow_style = False
+
+    with open(tpl_yaml_path, "r", encoding="utf-8") as f:
+        tpl_yaml_data = ruamel.yaml.round_trip_load(f)
+
+    out_yaml_data = copy.deepcopy(tpl_yaml_data)
+
+    # ## proxy-providers
+    pp_section_name = "proxy-providers"
+    tpl_provider_data = tpl_yaml_data[pp_section_name]["provider"]
+    for i, pu in enumerate(proxy_urls):
+        new_provider_data = copy.deepcopy(tpl_provider_data)
+        name = f"provider{i}"
+        new_provider_data["url"] = pu
+        new_provider_data["path"] = f"proxy-providers/tpl/{name}.yaml"
+
+        out_yaml_data[pp_section_name][name] = new_provider_data
+
+    del out_yaml_data[pp_section_name]["provider"]
+
+    # ## proxy-groups
+    pg_section_name = "proxy-groups"
+    tpl_group_select = next((group for group in tpl_yaml_data[pg_section_name] if group["name"] == "GroupSelect"), None)
+    if tpl_group_select is None:
+        sys.stderr.print("GroupSelect not found.")
+    tpl_group_auto = next((group for group in tpl_yaml_data[pg_section_name] if group["name"] == "GroupAuto"), None)
+    if tpl_group_auto is None:
+        sys.stderr.print("GroupAuto not found.")
+    for i in range(0, len(out_yaml_data[pp_section_name])):
+        # ### GroupSelect
+        new_select_group_data = copy.deepcopy(tpl_group_select)
+        name = f"Group{i}Select"
+        new_select_group_data["name"] = name
+        new_select_group_data["use"] = [f"provider{i}"]
+        out_yaml_data[pg_section_name].append(new_select_group_data)
+
+        # ### GroupAuto
+        new_auto_group_data = copy.deepcopy(tpl_group_auto)
+        name = f"Group{i}Auto"
+        new_auto_group_data["name"] = name
+        new_auto_group_data["use"] = [f"provider{i}"]
+        out_yaml_data[pg_section_name].append(new_auto_group_data)
+        
+    out_yaml_data[pg_section_name] = [group for group in out_yaml_data[pg_section_name] if group["name"] not in ["GroupSelect", "GroupAuto"]]
+
+    with open(out_yaml_path, "w", encoding="utf-8", newline="") as f:
+        yaml.dump(out_yaml_data, f)
