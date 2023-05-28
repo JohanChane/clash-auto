@@ -221,7 +221,7 @@ proxy-providers:
       url: http://www.gstatic.com/generate_204
 ```
 
-会将合并后的文件复制到 profiles 目录, 然后选择使用这个 profile 即可。最后选择 update_final_config 更新配置的资源。
+会将合并后的文件复制到 profiles 目录, 然后更新并选择这个 profile 即可。
 
 ### 启用/关闭 Tun 模式
 
