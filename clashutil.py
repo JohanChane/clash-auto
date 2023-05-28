@@ -21,7 +21,7 @@ def create_yaml_base_on_tpl(urls, tpl_yaml_path, out_yaml_path, sc_host=None, se
     if sc_host:
         for i, url in enumerate(urls):
             out_url, out_content = clashcfgutil.convert_to_clash_yaml_url(url, session, sc_host)
-            if url:
+            if out_url:
                 proxy_urls.append(out_url)
     else:
         proxy_urls = urls
