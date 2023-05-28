@@ -108,6 +108,8 @@ def main():
             profile_name = "final_clash_config.yaml"
             cmd = f'python {PATH_OF_UPDATE_CFG_RES} -d "{CFG_DIR}" -p "{profile_dir}"  -n "{profile_name}" -P "{proxy}" -t {TIMEOUT} -H "{sc_host}" -r'
             os.system(cmd)
+
+            clash_server_ctl(ServerCmd.RESTART)
         elif choiced_option == "update_profile":
             profiles = [f for f in os.listdir(PROFILE_DIR) if os.path.isfile(os.path.join(PROFILE_DIR, f))]
             profiles = [f for f in profiles if not f.endswith("~")]
