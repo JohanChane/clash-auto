@@ -89,23 +89,36 @@ proxy-groups:
     type: select
     proxies:
       - AllAuto
+      - AllSelect
+      # Group0Select, Group1Select, ...
+      - <select_groups>
+    url: 'http://www.gstatic.com/generate_204'
+    interval: 300
+
+  - name: "AllSelect"
+    type: select
+    use:
+      # provider0, provider1, ...
+      - <providers>
     url: 'http://www.gstatic.com/generate_204'
     interval: 300
 
   - name: "AllAuto"
     type: url-test
-    proxies: null
+    proxies:
+      # Group0Auto, Group1Auto, ...
+      - <auto_groups>
     url: 'http://www.gstatic.com/generate_204'
     interval: 30
 
-  # Select Group 的模板
+  # Select Group Template
   - name: "GroupSelect"
     type: select
     use: null
     url: 'http://www.gstatic.com/generate_204'
     interval: 300
 
-  # Auto Group 的模板
+  # Auto Group Template
   - name: "GroupAuto"
     type: url-test
     use: null
@@ -113,7 +126,7 @@ proxy-groups:
     interval: 300
 
 proxy-providers:
-  # proxy-provider 的模板
+  # provider template
   provider:
     type: http
     url: null
@@ -125,7 +138,7 @@ proxy-providers:
       url: http://www.gstatic.com/generate_204
 ```
 
-proxy_provides_urls (确保 url 有 proxies 字段)
+proxy_provider_urls (如果这些 url 的内容如果没有 proxies 的内容, 会使用 SubConverter 来转换。)
 
 ```yaml
 https://example1.com
@@ -135,65 +148,68 @@ https://example2.com
 tpl_out_clash_config.yaml
 
 ```yaml
-proxy-groups:
 - name: LastMatch
   type: select
   proxies:
   - DIRECT
   - Entry
-
 - name: Entry
   type: select
   proxies:
   - AllAuto
+  - AllSelect
+  - Group0Select
+  - Group1Select
   url: http://www.gstatic.com/generate_204
   interval: 300
-
+- name: AllSelect
+  type: select
+  use:
+  - provider0
+  - provider1
+  url: http://www.gstatic.com/generate_204
+  interval: 300
 - name: AllAuto
   type: url-test
   proxies:
+  - Group0Auto
+  - Group1Auto
   url: http://www.gstatic.com/generate_204
   interval: 30
-
 - name: Group0Select
   type: select
   use:
   - provider0
   url: http://www.gstatic.com/generate_204
   interval: 300
-
 - name: Group0Auto
   type: url-test
   use:
   - provider0
   url: http://www.gstatic.com/generate_204
   interval: 300
-
 - name: Group1Select
   type: select
   use:
   - provider1
   url: http://www.gstatic.com/generate_204
   interval: 300
-
 - name: Group1Auto
   type: url-test
   use:
   - provider1
   url: http://www.gstatic.com/generate_204
   interval: 300
-
 proxy-providers:
   provider0:
     type: http
-    url: https://example1.com
+    url: https://example1.com       # 或者是用 SubConverter 转换后的 url
     path: proxy-providers/tpl/provider0.yaml
     interval: 3600
     health-check:
       enable: true
       interval: 600
       url: http://www.gstatic.com/generate_204
-
   provider1:
     type: http
     url: https://example2.com
@@ -205,33 +221,7 @@ proxy-providers:
       url: http://www.gstatic.com/generate_204
 ```
 
-然后使用这个 Select Group 和 Auto Group 即可。
-
-```yaml
-proxy-groups:
-  - name: "LastMatch"
-    type: select
-    proxies:
-      - DIRECT
-      - Entry
-
-  - name: "Entry"
-    type: select
-    proxies:
-      - AllAuto
-      - Group0Select
-      - Group1Select
-    url: 'http://www.gstatic.com/generate_204'
-    interval: 300
-
-  - name: "AllAuto"
-    type: url-test
-    proxies: 
-      - Group0Auto
-      - Group1Auto
-    url: 'http://www.gstatic.com/generate_204'
-    interval: 30
-```
+会将合并后的文件复制到 profiles 目录, 然后选择使用这个 profile 即可。
 
 ### 启用/关闭 Tun 模式
 
