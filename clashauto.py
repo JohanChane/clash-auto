@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # _*_ coding: UTF-8 _*_
 
-import os, sys, configparser
+import os, sys, shutil, configparser
 from enum import Enum
 import ruamel.yaml
 import requests
@@ -169,12 +169,15 @@ def main():
             with open(url_path, "r", encoding="utf-8") as f:
                 urls = [r"{}".format(line.strip()) for line in f.readlines()]
             clashutil.create_yaml_base_on_tpl(urls, tpl_config_path, tpl_out_config_path, session, sc_host)
+            shutil.copy(tpl_out_config_path, "profiles/")
+            print(f'copied "{tpl_out_config_path}" to profile dir')
         elif choiced_option == "uwp_loopback":
             cmd = f'EnableLoopback.exe'
             os.system(cmd)
         elif choiced_option == "restart_clash_auto":
-            exec = sys.executable
-            os.execl(exec, exec, * sys.argv)
+            #exec = sys.executable
+            #os.execl(exec, exec, * sys.argv)
+            os.execl("clashauto.bat", "clashauto.bat")
         elif choiced_option == "exit":
             break;
         else:

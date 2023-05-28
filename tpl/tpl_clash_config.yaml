@@ -110,23 +110,36 @@ proxy-groups:
     type: select
     proxies:
       - AllAuto
+      - AllSelect
+      # Group0Select, Group1Select, ...
+      - <select_groups>
+    url: 'http://www.gstatic.com/generate_204'
+    interval: 300
+
+  - name: "AllSelect"
+    type: select
+    use:
+      # provider0, provider1, ...
+      - <providers>
     url: 'http://www.gstatic.com/generate_204'
     interval: 300
 
   - name: "AllAuto"
     type: url-test
-    proxies: null
+    proxies:
+      # Group0Auto, Group1Auto, ...
+      - <auto_groups>
     url: 'http://www.gstatic.com/generate_204'
     interval: 30
 
-  # template
+  # Select Group Template
   - name: "GroupSelect"
     type: select
     use: null
     url: 'http://www.gstatic.com/generate_204'
     interval: 300
 
-  # template
+  # Auto Group Template
   - name: "GroupAuto"
     type: url-test
     use: null
@@ -134,7 +147,7 @@ proxy-groups:
     interval: 300
 
 proxy-providers:
-  # template
+  # provider template
   provider:
     type: http
     url: null

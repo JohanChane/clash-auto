@@ -56,5 +56,3 @@ A: You may need to configure Windows Firewall to allow clash.exe to access the i
 ## Screenshots
 
 ![](./screenshots/clashauto.png)
-
-![](./screenshots/update_profile.png)

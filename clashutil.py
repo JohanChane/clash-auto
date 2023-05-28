@@ -57,22 +57,60 @@ def create_yaml_base_on_tpl(urls, tpl_yaml_path, out_yaml_path, sc_host=None, se
     tpl_group_auto = next((group for group in tpl_yaml_data[pg_section_name] if group["name"] == "GroupAuto"), None)
     if not tpl_group_auto:
         sys.stderr.print("GroupAuto not found.")
+    select_group_names = []
+    auto_group_names = []
+    provider_names = []
     for i in range(0, len(out_yaml_data[pp_section_name])):
+        pv_name = f"provider{i}"
+        provider_names.append(pv_name)
+
         # ### GroupSelect
         new_select_group_data = copy.deepcopy(tpl_group_select)
         name = f"Group{i}Select"
         new_select_group_data["name"] = name
-        new_select_group_data["use"] = [f"provider{i}"]
+        new_select_group_data["use"] = [pv_name]
         out_yaml_data[pg_section_name].append(new_select_group_data)
+        select_group_names.append(name)
 
         # ### GroupAuto
         new_auto_group_data = copy.deepcopy(tpl_group_auto)
         name = f"Group{i}Auto"
         new_auto_group_data["name"] = name
-        new_auto_group_data["use"] = [f"provider{i}"]
+        new_auto_group_data["use"] = [pv_name]
         out_yaml_data[pg_section_name].append(new_auto_group_data)
+        auto_group_names.append(name)
         
     out_yaml_data[pg_section_name] = [group for group in out_yaml_data[pg_section_name] if group["name"] not in ["GroupSelect", "GroupAuto"]]
+
+    # ## select_groups
+    for group in out_yaml_data[pg_section_name]:
+        proxies = group.get("proxies")
+        if not proxies:
+            continue
+        for i, group_name in enumerate(proxies):
+            if group_name == "<select_groups>":
+                group["proxies"] = proxies[:i] + select_group_names + proxies[i + 1:]
+                break
+
+    # ## auto_groups
+    for group in out_yaml_data[pg_section_name]:
+        proxies = group.get("proxies")
+        if not proxies:
+            continue
+        for i, group_name in enumerate(proxies):
+            if group_name == "<auto_groups>":
+                group["proxies"] = proxies[:i] + auto_group_names + proxies[i + 1:]
+                break
+
+    # ## providers
+    for group in out_yaml_data[pg_section_name]:
+        proxies = group.get("use")
+        if not proxies:
+            continue
+        for i, group_name in enumerate(proxies):
+            if group_name == "<providers>":
+                group["use"] = proxies[:i] + provider_names + proxies[i + 1:]
+                break
 
     with open(out_yaml_path, "w", encoding="utf-8", newline="") as f:
         yaml.dump(out_yaml_data, f)

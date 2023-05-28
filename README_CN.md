@@ -328,5 +328,3 @@ A: 设置 Windows 防火墙, 使 clash.exe 允许通过防火墙。
 ## Screenshots
 
 ![](./screenshots/clashauto.png)
-
-![](./screenshots/update_profile.png)
