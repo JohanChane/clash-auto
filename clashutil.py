@@ -1,8 +1,8 @@
-import sys
+import sys, copy
 import ruamel.yaml
 from ruamel.yaml.comments import CommentedMap
 from ruamel.yaml.comments import CommentedSeq
-import copy
+import clashcfgutil
 
 def merge_profile(basic_yaml_data, profile_yaml_data):
     merged_data = {}
@@ -16,7 +16,16 @@ def merge_profile(basic_yaml_data, profile_yaml_data):
             merged_data[key] = value
     return merged_data
     
-def create_yaml_base_on_tpl(proxy_urls, tpl_yaml_path, out_yaml_path):
+def create_yaml_base_on_tpl(urls, tpl_yaml_path, out_yaml_path, sc_host=None, session=None):
+    proxy_urls = []
+    if sc_host:
+        for i, url in enumerate(urls):
+            out_url, out_content = clashcfgutil.convert_to_clash_yaml_url(url, session, sc_host)
+            if url:
+                proxy_urls.append(out_url)
+    else:
+        proxy_urls = urls
+
     yaml = ruamel.yaml.YAML()
     #yaml.indent(mapping=2, sequence=4, offset=2)
     #yaml.explicit_start = True
@@ -43,10 +52,10 @@ def create_yaml_base_on_tpl(proxy_urls, tpl_yaml_path, out_yaml_path):
     # ## proxy-groups
     pg_section_name = "proxy-groups"
     tpl_group_select = next((group for group in tpl_yaml_data[pg_section_name] if group["name"] == "GroupSelect"), None)
-    if tpl_group_select is None:
+    if not tpl_group_select:
         sys.stderr.print("GroupSelect not found.")
     tpl_group_auto = next((group for group in tpl_yaml_data[pg_section_name] if group["name"] == "GroupAuto"), None)
-    if tpl_group_auto is None:
+    if not tpl_group_auto:
         sys.stderr.print("GroupAuto not found.")
     for i in range(0, len(out_yaml_data[pp_section_name])):
         # ### GroupSelect

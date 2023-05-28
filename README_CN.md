@@ -20,6 +20,7 @@
 ### 软件的文件的作用
 
 -   clashauto.bat: 用于管理 clash 服务。
+-   config.ini: Clash Auto 的配置。
 -   config: 是 clash 的配置目录。
 -   profiles: 用于放置 profile 文件。
 -   basic_clash_config.yaml: 用于配置 clash 的基础配置。修改该文件后, 记得重启 clashauto.bat
@@ -63,6 +64,10 @@
 ### Clash 的客户端
 
 浏览器访问 http://127.0.0.1:9090/ui 即可。
+
+### Clash Auto 的配置
+
+sc_host: 表示订阅转换的后端地址。在转换 url 时, 如果发现 url 的内容不是 Clash 配置, 则使用订阅转换来转换该 url。
 
 ### 根据模板配置生成新的配置
 

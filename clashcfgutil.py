@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # _*_ coding: UTF-8 _*_
 
-import sys, os, shutil
+import sys, os, shutil, urllib.parse
 import ruamel.yaml, requests
 
-def update_res(sections, cfg_dir, profile_dir, *, profile_name, profile_url=None, is_cfw=None, proxy=None, timeout=None):
+def update_res(sections, cfg_dir, profile_dir, *, profile_name, profile_url=None, is_cfw=None, proxy=None, timeout=None, sc_host=None):
     profile_path, temp_profile_url = get_cfg_path(profile_dir, profile_name, is_cfw)
     if temp_profile_url:
         profile_url = temp_profile_url
@@ -24,16 +24,15 @@ def update_res(sections, cfg_dir, profile_dir, *, profile_name, profile_url=None
         if os.path.exists(profile_path):
             cfg_path_bak = profile_path + "~"
             shutil.copy(profile_path, cfg_path_bak)
-        #response = session.get(cfg_url)
-        with session.get(profile_url) as response:
-            yaml_data = ruamel.yaml.safe_load(response.content.decode("utf-8"))
-            if yaml_data.get("proxy-groups") or yaml_data.get("proxies"):
-                with open(profile_path, "wb") as f:
-                    f.write(response.content)
-                print(f'Updated cfg successfully: "{profile_path}", "{profile_url}"')
-            else:
-                print(f'Updated cfg failed: "{profile_path}", "{profile_url}"')
-        
+
+        content = download_sub_url(profile_url, session, sc_host)
+        if content:
+            with open(profile_path, "wb") as f:
+                f.write(content)
+            print(f'Updated cfg successfully: "{profile_path}", "{profile_url}"')
+        else:
+            print(f'Updated cfg failed: "{profile_path}", "{profile_url}"')
+
     if not os.path.exists(profile_path):
         sys.stderr.write(f'cfg_path: "{profile_path}" isn\'t exists.')
         sys.exit(os.EX_USAGE)
@@ -42,7 +41,7 @@ def update_res(sections, cfg_dir, profile_dir, *, profile_name, profile_url=None
     res = []
     for s in sections:
         res = get_net_res(profile_path, [s])
-        updated_res += update_net_res(session, res, s, cfg_dir)
+        updated_res += update_net_res(session, res, s, cfg_dir, sc_host)
     print(f'Updated resource(s) needed by "{profile_path}"')
     return updated_res
 
@@ -87,7 +86,7 @@ def get_net_res(profile_path, sections):
 
     return net_res
 
-def update_net_res(session, net_res, section, cfg_dir):
+def update_net_res(session, net_res, section, cfg_dir, sc_host=None):
     oldcwd = os.getcwd()
     os.chdir(cfg_dir)
     
@@ -97,21 +96,19 @@ def update_net_res(session, net_res, section, cfg_dir):
         if not os.path.exists(dirpath):
             os.makedirs(dirpath)
         
-        try:
-            #response = session.get(i[0])
+        if section == "proxy-providers":
+            content = download_sub_url(i[0], session, sc_host)
+        else:
             with session.get(i[0]) as response:
-                yaml_data = ruamel.yaml.safe_load(response.content.decode("utf-8"))
-                if section == "proxy-providers" and not yaml_data.get("proxies"):
-                    print(f'Updated failed: didn\'t write the content to "{i[1]}", for "{i[0]}" hasn\'t "proxies" key')
-                    return updated_res
+                content = response.content
 
-                with open(i[1], "wb") as f:
-                    f.write(response.content)
-                print(f'Updated successfully: "{i[1]}", "{i[0]}"')
-                updated_res.append(i)
-        except requests.exceptions.RequestException as e:
-            print("requests exceptions：", e)
-            return updated_res
+        if content:
+            with open(i[1], "wb") as f:
+                f.write(content)
+            print(f'Updated successfully: "{i[1]}", "{i[0]}"')
+            updated_res.append(i)
+        else:
+            print(f'Updated failed: "{i[1]}", "{i[0]}"')
 
     os.chdir(oldcwd)
 
@@ -125,3 +122,44 @@ def install_proxy_providers(net_res_files, src_cfg_dir, dest_cfg_dir):
         if not os.path.exists(os.path.dirname(dest_file)):
             os.system(f'sudo -u nobody mkdir -p {os.path.dirname(dest_file)}')
         os.system(f'sudo install -o nobody -g nobody -m 0644 {src_file} {dest_file}')
+        
+def download_sub_url(url, session, sc_host=None):
+    out_url, out_conent = convert_to_clash_yaml_url(url, sc_host, session)
+    return out_conent
+
+def convert_to_clash_yaml_url(url, sc_host, session):
+    out_url = []
+    out_content = []
+    try:
+        with session.get(url) as response:
+            yaml_data = ruamel.yaml.safe_load(response.content.decode("utf-8"))
+            if is_clash_yaml(yaml_data):
+                out_url = url
+                out_content = response.content
+                return out_url, out_content
+            else:
+                sc_url = create_subconverter_url(url, sc_host)
+
+        with session.get(sc_url) as response:
+            yaml_data = ruamel.yaml.safe_load(response.content.decode("utf-8"))
+            if is_clash_yaml(yaml_data):
+                out_url = sc_url
+                out_content = response.content
+    except requests.exceptions.RequestException as e:
+        print("requests exceptions：", e)
+        return out_url, out_content
+
+    return out_url, out_content
+
+def create_subconverter_url(url, host):
+    encoded_url = urllib.parse.quote(url, safe='')
+    subconverter_url = r"{}".format(f'https://{host}/sub?target=clash&url={encoded_url}')
+    return subconverter_url
+
+def is_clash_yaml(yaml_data):
+    if isinstance(yaml_data, str):
+        return False
+    if yaml_data.get("proxies") or yaml_data.get("proxy-groups"):
+        return True
+    else:
+        return False

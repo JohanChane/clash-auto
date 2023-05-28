@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # _*_ coding: UTF-8 _*_
 
-import os, sys
+import os, sys, configparser
 from enum import Enum
 import ruamel.yaml
+import requests
 import clashutil
 
 # ## Global Vars
@@ -75,9 +76,22 @@ def clash_server_ctl(server_cmd):
 def main():
     os.chdir(SCRIPT_PATH)
     
+    config = configparser.ConfigParser()
+    config.read("config.ini")
+    sc_host = config.get("main", "sc_host")
+
     with open(BASIC_CLASH_CONFIG_PATH, "r", encoding="utf-8") as f:
         basic_yaml_data = ruamel.yaml.safe_load(f)
     proxy = get_proxy(basic_yaml_data)
+    
+    session = requests.Session()
+    session.headers.update({"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"})
+    if proxy:
+        protocol, address = proxy.split("://")
+        session.proxies = {
+            protocol: address
+        }
+    session.timeout = TIMEOUT
 
     options = ["update_final_config", "update_profile", "select_profile", "restart_clash_service", \
                "stop_clash_service", "config_clash_service", "install_clash_service", "uninstall_clash_service", \
@@ -92,7 +106,7 @@ def main():
         if choiced_option == "update_final_config":
             profile_dir = SCRIPT_PATH
             profile_name = "final_clash_config.yaml"
-            cmd = f'python {PATH_OF_UPDATE_CFG_RES} -d "{CFG_DIR}" -f "{profile_dir}"  -n "{profile_name}" -p "{proxy}" -i {TIMEOUT} -r'
+            cmd = f'python {PATH_OF_UPDATE_CFG_RES} -d "{CFG_DIR}" -p "{profile_dir}"  -n "{profile_name}" -P "{proxy}" -t {TIMEOUT} -H "{sc_host}" -r'
             os.system(cmd)
         elif choiced_option == "update_profile":
             profiles = [f for f in os.listdir(PROFILE_DIR) if os.path.isfile(os.path.join(PROFILE_DIR, f))]
@@ -106,10 +120,10 @@ def main():
                 with open(os.path.join(PROFILE_DIR, choiced_profile_name), "r") as f:
                     profile_url = r"{}".format(f.readline().strip())
                 profile_name = choiced_profile_name[:-4] + ".yaml"
-                cmd = f'python {PATH_OF_UPDATE_CFG_RES} -d "{CFG_DIR}" -f "{PROFILE_DIR}"  -n "{profile_name}" -u "{profile_url}" -p "{proxy}" -i {TIMEOUT} -r'
+                cmd = f'python {PATH_OF_UPDATE_CFG_RES} -d "{CFG_DIR}" -p "{PROFILE_DIR}"  -n "{profile_name}" -u "{profile_url}" -P "{proxy}" -t {TIMEOUT} -H "{sc_host}" -r'
             else:
                 profile_name = choiced_profile_name
-                cmd = f'python {PATH_OF_UPDATE_CFG_RES} -d "{CFG_DIR}" -f "{PROFILE_DIR}"  -n "{profile_name}" -p "{proxy}" -i {TIMEOUT} -r'
+                cmd = f'python {PATH_OF_UPDATE_CFG_RES} -d "{CFG_DIR}" -p "{PROFILE_DIR}"  -n "{profile_name}" -P "{proxy}" -t {TIMEOUT} -H "{sc_host}" -r'
 
             os.system(cmd)
         
@@ -154,7 +168,7 @@ def main():
             url_path = "tpl/proxy_provider_urls"
             with open(url_path, "r", encoding="utf-8") as f:
                 urls = [r"{}".format(line.strip()) for line in f.readlines()]
-            clashutil.create_yaml_base_on_tpl(urls, tpl_config_path, tpl_out_config_path)
+            clashutil.create_yaml_base_on_tpl(urls, tpl_config_path, tpl_out_config_path, session, sc_host)
         elif choiced_option == "uwp_loopback":
             cmd = f'EnableLoopback.exe'
             os.system(cmd)
