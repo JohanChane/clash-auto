@@ -114,3 +114,5 @@ def create_yaml_base_on_tpl(urls, tpl_yaml_path, out_yaml_path, sc_host=None, se
 
     with open(out_yaml_path, "w", encoding="utf-8", newline="") as f:
         yaml.dump(out_yaml_data, f)
+        
+    return proxy_urls

@@ -9,7 +9,6 @@ import clashutil
 
 # ## Global Vars
 SCRIPT_PATH = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
-CLASH_CORE = os.path.join(SCRIPT_PATH, "clash.exe")
 CFG_DIR = os.path.join(SCRIPT_PATH, "config")
 PROFILE_DIR = os.path.join(SCRIPT_PATH, "profiles")
 
@@ -58,22 +57,22 @@ def clash_server_ctl(server_cmd):
     os.chdir(SCRIPT_PATH)
 
     if server_cmd == ServerCmd.RESTART:
-        cmd = f"nssm.exe restart clash"
+        cmd = f"sudo systemctl restart clash"
     elif server_cmd == ServerCmd.STOP:
-        cmd = f"nssm.exe stop clash"
+        cmd = f"sudo systemctl stop clash"
     elif server_cmd == ServerCmd.CONFIG:
-        cmd = f"nssm.exe edit clash"
-    elif server_cmd == ServerCmd.INSTALL:
-        cmd = f'nssm.exe install clash "{CLASH_CORE}" -d "{CFG_DIR}" -f "{FINAL_CLASH_CONFIG_PATH}"'
-    elif server_cmd == ServerCmd.UNINSTALL:
-        cmd = f"nssm.exe remove clash confirm"
+        cmd = f"sudo systemctl edit clash"
     elif server_cmd == ServerCmd.TEST:
-        cmd = f'{CLASH_CORE} -d "{CFG_DIR}" -f "{FINAL_CLASH_CONFIG_PATH}" -t'
+        cmd = f'clash -d "{CFG_DIR}" -f "{FINAL_CLASH_CONFIG_PATH}" -t'
         print(cmd)
 
     os.system(cmd)
 
 def main():
+    #if os.geteuid() != 0:
+    #    os.execvp("sudo", ["sudo", "python", __file__])
+    #    return 0
+
     os.chdir(SCRIPT_PATH)
     
     config = configparser.ConfigParser()
@@ -85,7 +84,7 @@ def main():
     proxy = get_proxy(basic_yaml_data)
     
     session = requests.Session()
-    session.headers.update({"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"})
+    session.headers.update({"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"})
     if proxy:
         protocol, address = proxy.split("://")
         session.proxies = {
@@ -94,8 +93,8 @@ def main():
     session.timeout = TIMEOUT
 
     options = ["update_final_config", "update_profile", "select_profile", "restart_clash_service", \
-               "stop_clash_service", "config_clash_service", "install_clash_service", "uninstall_clash_service", \
-               "test_config", "create_yaml", "uwp_loopback", "restart_clash_auto", "exit"]
+               "stop_clash_service", "config_clash_service", \
+               "test_config", "create_yaml", "restart_clash_auto", "exit"]
     while True:
         print()
         choice = select(options)
@@ -156,12 +155,6 @@ def main():
         elif choiced_option == "config_clash_service":
             clash_server_ctl(ServerCmd.CONFIG)
             clash_server_ctl(ServerCmd.RESTART)
-        elif choiced_option == "install_clash_service":
-            clash_server_ctl(ServerCmd.INSTALL)
-            clash_server_ctl(ServerCmd.RESTART)
-        elif choiced_option == "uninstall_clash_service":
-            clash_server_ctl(ServerCmd.STOP)
-            clash_server_ctl(ServerCmd.UNINSTALL)
         elif choiced_option == "test_config":
             clash_server_ctl(ServerCmd.TEST)
         elif choiced_option == "create_yaml":
@@ -174,13 +167,9 @@ def main():
             print(f"used providers: {proxy_urls}")
             shutil.copy(tpl_out_config_path, "profiles/")
             print(f'copied "{tpl_out_config_path}" to profile dir')
-        elif choiced_option == "uwp_loopback":
-            cmd = f'EnableLoopback.exe'
-            os.system(cmd)
         elif choiced_option == "restart_clash_auto":
-            #exec = sys.executable
-            #os.execl(exec, exec, * sys.argv)
-            os.execl("clashauto.bat", "clashauto.bat")
+            exec = sys.executable
+            os.execl(exec, exec, * sys.argv)
         elif choiced_option == "exit":
             break;
         else:
