@@ -128,8 +128,8 @@ def download_sub_url(url, session, sc_host=None):
     return out_conent
 
 def convert_to_clash_yaml_url(url, sc_host, session):
-    out_url = []
-    out_content = []
+    out_url = None
+    out_content = None
     try:
         with session.get(url) as response:
             yaml_data = ruamel.yaml.safe_load(response.content.decode("utf-8"))
@@ -147,7 +147,7 @@ def convert_to_clash_yaml_url(url, sc_host, session):
                 out_content = response.content
     except requests.exceptions.RequestException as e:
         print("requests exceptions：", e)
-        return out_url, out_content
+        return None, None
 
     return out_url, out_content
 
@@ -157,9 +157,11 @@ def create_subconverter_url(url, host):
     return subconverter_url
 
 def is_clash_yaml(yaml_data):
-    if isinstance(yaml_data, str):
+    if not yaml_data:
         return False
-    if yaml_data.get("proxies") or yaml_data.get("proxy-groups"):
+    elif isinstance(yaml_data, str):
+        return False
+    elif yaml_data.get("proxies") or yaml_data.get("proxy-groups"):
         return True
     else:
         return False

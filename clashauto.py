@@ -113,6 +113,7 @@ def main():
         elif choiced_option == "update_profile":
             profiles = [f for f in os.listdir(PROFILE_DIR) if os.path.isfile(os.path.join(PROFILE_DIR, f))]
             profiles = [f for f in profiles if not f.endswith("~")]
+            profiles.sort()
             profile_index = select(profiles)
             if profile_index >= len(profiles):
                 print("backward")
@@ -132,6 +133,7 @@ def main():
         elif choiced_option == "select_profile":
             profiles = [f for f in os.listdir(PROFILE_DIR) if os.path.isfile(os.path.join(PROFILE_DIR, f))]
             profiles = [f for f in profiles if not f.endswith("~") and not f.endswith("_url")]
+            profiles.sort()
             profile_index = select(profiles)
             if profile_index >= len(profiles):
                 print("backward")
@@ -168,10 +170,20 @@ def main():
             tpl_config_path = "tpl/tpl_clash_config.yaml"
             tpl_out_config_path = "tpl/tpl_out_clash_config.yaml"
             url_path = "tpl/proxy_provider_urls"
+            urls = []
             with open(url_path, "r", encoding="utf-8") as f:
-                urls = [r"{}".format(line.strip()) for line in f.readlines()]
-            proxy_urls = clashutil.create_yaml_base_on_tpl(urls, tpl_config_path, tpl_out_config_path, session, sc_host)
-            print(f"used providers: {proxy_urls}")
+                for i in f.readlines():
+                    line = i.strip()
+                    if line.startswith('#'):
+                        continue
+                    if line:
+                        urls.append(r'{}'.format(line))
+                    
+            proxy_urls, failed_urls = clashutil.create_yaml_base_on_tpl(urls, tpl_config_path, tpl_out_config_path, session, sc_host)
+            print("used providers:")
+            [print(f"-   {i}") for i in proxy_urls]
+            print("failed providers:")
+            [print(f"-   {i}") for i in failed_urls]
             shutil.copy(tpl_out_config_path, "profiles/")
             print(f'copied "{tpl_out_config_path}" to profile dir')
         elif choiced_option == "uwp_loopback":

@@ -18,11 +18,14 @@ def merge_profile(basic_yaml_data, profile_yaml_data):
     
 def create_yaml_base_on_tpl(urls, tpl_yaml_path, out_yaml_path, sc_host=None, session=None):
     proxy_urls = []
+    failed_urls = []
     if sc_host:
         for i, url in enumerate(urls):
             out_url, out_content = clashcfgutil.convert_to_clash_yaml_url(url, session, sc_host)
             if out_url:
                 proxy_urls.append(out_url)
+            else:
+                failed_urls.append(url)
     else:
         proxy_urls = urls
 
@@ -115,4 +118,4 @@ def create_yaml_base_on_tpl(urls, tpl_yaml_path, out_yaml_path, sc_host=None, se
     with open(out_yaml_path, "w", encoding="utf-8", newline="") as f:
         yaml.dump(out_yaml_data, f)
         
-    return proxy_urls
+    return proxy_urls, failed_urls
