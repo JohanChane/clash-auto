@@ -258,15 +258,26 @@ rule-providers:
     interval: 21600
 
 rules:
+  # ## Basic
   #- PROCESS-NAME,v2ray,DIRECT
   #- PROCESS-NAME,v2ray.exe,DIRECT
-  #- DOMAIN,cdn.jsdelivr.net,Entry
-  #- DOMAIN-SUFFIX,githubusercontent.com,Entry
-
-  # ## Clash rules
-  - RULE-SET,applications,DIRECT
   - DOMAIN,clash.razord.top,DIRECT
   - DOMAIN,yacd.haishan.me,DIRECT
+  #- DOMAIN,cdn.jsdelivr.net,Entry
+  #- DOMAIN-SUFFIX,githubusercontent.com,Entry
+  - DOMAIN-SUFFIX,cn.bing.com,DIRECT
+  - DOMAIN-SUFFIX,bing.com,Entry
+  - DOMAIN-KEYWORD,speedtest,Entry
+  #- DOMAIN,aur.archlinux.org,Entry
+
+  # ## 订阅转换
+  - DOMAIN-SUFFIX,suo.yt,Entry
+  - DOMAIN-SUFFIX,bianyuan.xyz,Entry
+  - DOMAIN-SUFFIX,sub.xeton.dev,Entry
+  - DOMAIN-SUFFIX,sub.id9.cc,Entry
+
+  # ## Clash Rules
+  - RULE-SET,applications,DIRECT
   - RULE-SET,private,DIRECT
   - RULE-SET,reject,REJECT
   - RULE-SET,tld-not-cn,Entry
