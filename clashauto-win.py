@@ -5,7 +5,7 @@ import os, sys, shutil, configparser
 from enum import Enum
 import ruamel.yaml
 import requests
-import clashutil
+from clashautoutil import ClashUtil
 
 # ## Global Vars
 SCRIPT_PATH = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
@@ -18,19 +18,6 @@ FINAL_CLASH_CONFIG_PATH = os.path.join(SCRIPT_PATH, "final_clash_config.yaml")
 TIMEOUT = 5
 
 PATH_OF_UPDATE_CFG_RES = os.path.join(SCRIPT_PATH, "update_clashcfg_res.py")
-
-def get_proxy(yaml_data):
-    port = yaml_data.get("mixed-port")
-    if port:
-        proxy = f"https://127.0.0.1:{port}"
-    port = yaml_data.get("port")
-    if port:
-        proxy = f"https://127.0.0.1:{port}"
-    port = yaml_data.get("socks-port")
-    if port:
-        proxy = f"socks5://127.0.0.1:{port}"
-    
-    return proxy if proxy else "https://127.0.0.1:7890"
 
 def select(options):
     print("Please select an option:")
@@ -45,6 +32,11 @@ def select(options):
         choice = len(options)
 
     return choice
+
+def get_file_names(dir_path):
+    file_names = [f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
+    file_names.sort()
+    return file_names
 
 class ServerCmd(Enum):
     RESTART = 1
@@ -82,10 +74,10 @@ def main():
 
     with open(BASIC_CLASH_CONFIG_PATH, "r", encoding="utf-8") as f:
         basic_yaml_data = ruamel.yaml.safe_load(f)
-    proxy = get_proxy(basic_yaml_data)
+    proxy = ClashUtil.get_proxy(basic_yaml_data)
     
     session = requests.Session()
-    session.headers.update({"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"})
+    session.headers.update({"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"})
     if proxy:
         protocol, address = proxy.split("://")
         session.proxies = {
@@ -93,9 +85,13 @@ def main():
         }
     session.timeout = TIMEOUT
 
-    options = ["update_final_config", "update_profile", "select_profile", "restart_clash_service", \
-               "stop_clash_service", "config_clash_service", "install_clash_service", "uninstall_clash_service", \
-               "test_config", "create_yaml", "uwp_loopback", "restart_clash_auto", "exit"]
+    clash_util = ClashUtil(session, CFG_DIR, PROFILE_DIR, sc_host);
+
+    options = ["update_final_config", "update_profile", "select_profile", \
+               "restart_clash_service", "stop_clash_service", \
+               "test_config", "create_yaml", "uwp_loopback", \
+               "config_clash_service", "install_clash_service", "uninstall_clash_service", \
+               "restart_clash_auto", "exit"]
     while True:
         print()
         choice = select(options)
@@ -104,36 +100,53 @@ def main():
             continue
         choiced_option = options[choice]
         if choiced_option == "update_final_config":
-            profile_dir = SCRIPT_PATH
-            profile_name = "final_clash_config.yaml"
-            cmd = f'python {PATH_OF_UPDATE_CFG_RES} -d "{CFG_DIR}" -p "{profile_dir}"  -n "{profile_name}" -P "{proxy}" -t {TIMEOUT} -H "{sc_host}" -r'
-            os.system(cmd)
+            profile_path = os.path.join(SCRIPT_PATH, "final_clash_config.yaml")
+            updated_res, no_update_res = clash_util.update_dep_net_res(profile_path)
+            print("updated_res:")
+            [print(f'-   {s}, {i}') for s, r in updated_res.items() for i in r]
+            print("no_update_res:")
+            [print(f'-   {s}, {i}') for s, r in no_update_res.items() for i in r]
 
             clash_server_ctl(ServerCmd.RESTART)
         elif choiced_option == "update_profile":
-            profiles = [f for f in os.listdir(PROFILE_DIR) if os.path.isfile(os.path.join(PROFILE_DIR, f))]
-            profiles = [f for f in profiles if not f.endswith("~")]
-            profiles.sort()
+            file_names = get_file_names(PROFILE_DIR)
+            profiles = [f for f in file_names if not f.endswith("~")]
             profile_index = select(profiles)
             if profile_index >= len(profiles):
                 print("backward")
                 continue
             choiced_profile_name = profiles[profile_index]
             if choiced_profile_name.endswith("_url"):
-                with open(os.path.join(PROFILE_DIR, choiced_profile_name), "r") as f:
-                    profile_url = r"{}".format(f.readline().strip())
                 profile_name = choiced_profile_name[:-4] + ".yaml"
-                cmd = f'python {PATH_OF_UPDATE_CFG_RES} -d "{CFG_DIR}" -p "{PROFILE_DIR}"  -n "{profile_name}" -u "{profile_url}" -P "{proxy}" -t {TIMEOUT} -H "{sc_host}" -r'
+                profile_path = os.path.join(PROFILE_DIR, profile_name)
+
+                urls = ClashUtil.extra_urls(os.path.join(PROFILE_DIR, choiced_profile_name))
+                profile_url = ""
+                if urls:
+                    profile_url = "|".join(urls)
+                out_url, out_content = clash_util.fetch_sub_url(profile_url)
+                if out_content:
+                    with open(profile_path, "wb") as f:
+                        f.write(out_content)
+                        print(f'Updated profile: "{profile_path}", "{out_url}"')
+                else:
+                    print(f'Failed to update profile: out_url="{out_url}"')
+                    print("backward")
+                    continue
             else:
                 profile_name = choiced_profile_name
-                cmd = f'python {PATH_OF_UPDATE_CFG_RES} -d "{CFG_DIR}" -p "{PROFILE_DIR}"  -n "{profile_name}" -P "{proxy}" -t {TIMEOUT} -H "{sc_host}" -r'
+                profile_path = os.path.join(PROFILE_DIR, profile_name)
 
-            os.system(cmd)
+            sections = ["proxy-providers", "rule-providers"]
+            updated_res, no_update_res = clash_util.update_dep_net_res(profile_path, sections)
+            print("updated_res:")
+            [print(f'-   {s}, {i}') for s, r in updated_res.items() for i in r]
+            print("no_update_res:")
+            [print(f'-   {s}, {i}') for s, r in no_update_res.items() for i in r]
         
         elif choiced_option == "select_profile":
-            profiles = [f for f in os.listdir(PROFILE_DIR) if os.path.isfile(os.path.join(PROFILE_DIR, f))]
-            profiles = [f for f in profiles if not f.endswith("~") and not f.endswith("_url")]
-            profiles.sort()
+            file_names = get_file_names(PROFILE_DIR)
+            profiles = [f for f in file_names if not f.endswith("~") and not f.endswith("_url")]
             profile_index = select(profiles)
             if profile_index >= len(profiles):
                 print("backward")
@@ -144,7 +157,7 @@ def main():
             profile_path = os.path.join(PROFILE_DIR, profile_name)
             with open(profile_path, "r", encoding="utf-8") as f:
                 profile_yaml_data = ruamel.yaml.safe_load(f)
-            merged_yaml_data = clashutil.merge_profile(basic_yaml_data, profile_yaml_data)
+            merged_yaml_data = ClashUtil.merge_profile(basic_yaml_data, profile_yaml_data)
             with open(FINAL_CLASH_CONFIG_PATH, "w", encoding="utf-8", newline="") as f:
                 ruamel.yaml.round_trip_dump(merged_yaml_data, f)
             print(f'Merged "{BASIC_CLASH_CONFIG_PATH}" and "{profile_path}" into "{FINAL_CLASH_CONFIG_PATH}"')
@@ -158,34 +171,26 @@ def main():
         elif choiced_option == "config_clash_service":
             clash_server_ctl(ServerCmd.CONFIG)
             clash_server_ctl(ServerCmd.RESTART)
-        elif choiced_option == "install_clash_service":
-            clash_server_ctl(ServerCmd.INSTALL)
-            clash_server_ctl(ServerCmd.RESTART)
-        elif choiced_option == "uninstall_clash_service":
-            clash_server_ctl(ServerCmd.STOP)
-            clash_server_ctl(ServerCmd.UNINSTALL)
         elif choiced_option == "test_config":
             clash_server_ctl(ServerCmd.TEST)
         elif choiced_option == "create_yaml":
             tpl_config_path = "tpl/tpl_clash_config.yaml"
             tpl_out_config_path = "tpl/tpl_out_clash_config.yaml"
             url_path = "tpl/proxy_provider_urls"
-            urls = []
-            with open(url_path, "r", encoding="utf-8") as f:
-                for i in f.readlines():
-                    line = i.strip()
-                    if line.startswith('#'):
-                        continue
-                    if line:
-                        urls.append(r'{}'.format(line))
-                    
-            proxy_urls, failed_urls = clashutil.create_yaml_base_on_tpl(urls, tpl_config_path, tpl_out_config_path, session, sc_host)
+            urls = ClashUtil.extra_urls(url_path)
+            proxy_urls, failed_urls = clash_util.create_yaml_base_on_tpl(urls, tpl_config_path, tpl_out_config_path)
             print("used providers:")
             [print(f"-   {i}") for i in proxy_urls]
             print("failed providers:")
             [print(f"-   {i}") for i in failed_urls]
             shutil.copy(tpl_out_config_path, "profiles/")
             print(f'copied "{tpl_out_config_path}" to profile dir')
+        elif choiced_option == "install_clash_service":
+            clash_server_ctl(ServerCmd.INSTALL)
+            clash_server_ctl(ServerCmd.RESTART)
+        elif choiced_option == "uninstall_clash_service":
+            clash_server_ctl(ServerCmd.STOP)
+            clash_server_ctl(ServerCmd.UNINSTALL)
         elif choiced_option == "uwp_loopback":
             cmd = f'EnableLoopback.exe'
             os.system(cmd)

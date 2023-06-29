@@ -1,6 +1,6 @@
 # Clash Auto
 
-language: [中文](./README_CN.md)
+language: [English (out of date)](./README.md) | [中文](./README_CN.md)
 
 ## Supported Platforms
 

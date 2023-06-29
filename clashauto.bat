@@ -24,5 +24,5 @@ if '%errorlevel%' NEQ '0' (
 
 :: Your code goes below this line
 
-python %~dp0clashauto.py
+python %~dp0clashauto-win.py
 pause

@@ -52,6 +52,16 @@
     <your clash config url>
     ```
     
+    同时也支持 `vmess://, trojan://` 等开头的链接并且可以将它们一起放在一个 url 文件。比如:
+    
+    profiles/example_url
+
+    ```
+    <your clash config url>
+    vmess://...
+    trojan://...
+    ```
+    
     选择该选项后会将 url 的内容保存到 profiles/example.yaml, 且更新该配置依赖的资源。更新成功后, 用户在 select_profile 选项中选择该配置即可。
     
 -   select_profile: 表示选择一个 `profile` 和 `basic_clash_config.yaml` 合并到 `final_clash_config.yaml`。同时重启 clash 服务使配置文件生效。
