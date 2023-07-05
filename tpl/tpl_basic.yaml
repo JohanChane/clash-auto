@@ -45,8 +45,8 @@ dns:
     #- tls://dns.rubyfish.cn:853 # DNS over TLS
     #- https://1.1.1.1/dns-query # DNS over HTTPS
   fallback:
-      - https://8888.google/dns-query
-      - https://1.0.0.1/dns-query
+    - https://8888.google/dns-query
+    - https://1.0.0.1/dns-query
   fallback-filter:
     geoip: true
     ipcidr:
@@ -55,9 +55,9 @@ dns:
     #  - '+.google.com'
     #  - '+.facebook.com'
     #  - '+.youtube.com'
-    #  - "+.github.com"
-    #  - "+.githubusercontent.com"
-    #  - "+.googlevideo.com"
+    #  - '+.github.com'
+    #  - '+.githubusercontent.com'
+    #  - '+.googlevideo.com'
 
 tun:
   enable: true
@@ -74,47 +74,39 @@ proxy-groups:
     proxies:
       - AllAuto
       - AllSelect
-      # Group0Select, Group1Select, ...
-      - <select_groups>
-      - <auto_groups>
-    url: 'http://www.gstatic.com/generate_204'
+      - <Auto>
+    url: http://www.gstatic.com/generate_204
     interval: 300
 
   - name: "AllSelect"
     type: select
     use:
-      # provider0, provider1, ...
-      - <providers>
-    url: 'http://www.gstatic.com/generate_204'
+      - <provider>
+    url: http://www.gstatic.com/generate_204
     interval: 300
 
   - name: "AllAuto"
     type: url-test
     proxies:
-      # Group0Auto, Group1Auto, ...
-      - <auto_groups>
-    url: 'http://www.gstatic.com/generate_204'
+      - <Auto>
+    url: http://www.gstatic.com/generate_204
     interval: 30
 
-  # Select Group Template
-  - name: "GroupSelect"
+  - name: "Select"
+    tpl_param:
+      providers: ["provider"]
     type: select
     use: null
-    url: 'http://www.gstatic.com/generate_204'
+    url: http://www.gstatic.com/generate_204
     interval: 300
 
-  # Auto Group Template
-  - name: "GroupAuto"
+  - name: "Auto"
+    tpl_param:
+      providers: ["provider"]
     type: url-test
     use: null
-    url: 'http://www.gstatic.com/generate_204'
+    url: http://www.gstatic.com/generate_204
     interval: 300
-
-  - name: "RuleMode-LastMatch"
-    type: select
-    proxies:
-      - Entry
-      - DIRECT
 
   - name: "RuleMode"
     type: select
@@ -122,9 +114,15 @@ proxy-groups:
       - DIRECT
       - Entry
 
+  - name: "RuleMode-LastMatch"
+    type: select
+    proxies:
+      - Entry
+      - DIRECT
+
 proxy-providers:
-  # provider template
   provider:
+    tpl_param:
     type: http
     url: null
     path: null

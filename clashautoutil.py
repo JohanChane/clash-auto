@@ -59,25 +59,26 @@ class ClashUtil():
 
         return net_res
 
-    def fetch_sub_url(self, url, list=False):
-        out_url, out_conent = self.convert_to_clash_yaml_url(url, list)
+    def fetch_sub_url(self, url, list=False, rename=None):
+        out_url, out_conent = self.convert_to_clash_yaml_url(url, list=True)
         return out_url, out_conent
 
-    def convert_to_clash_yaml_url(self, url, list=False):
+    def convert_to_clash_yaml_url(self, url, *, must_use_sc_host=False, list=False, rename=None):
         out_url = None
         out_content = None
         try:
-            # If url content is clash yaml
-            if url.startswith("http"):
-                with self.__session.get(url) as response:
-                    yaml_data = ruamel.yaml.safe_load(response.content.decode("utf-8"))
-                    if self.is_clash_yaml(yaml_data):
-                        out_url = url
-                        out_content = response.content
-                        return out_url, out_content
+            if not must_use_sc_host:
+                # If url content is clash yaml
+                if url.startswith("http"):
+                    with self.__session.get(url) as response:
+                        yaml_data = ruamel.yaml.safe_load(response.content.decode("utf-8"))
+                        if self.is_clash_yaml(yaml_data):
+                            out_url = url
+                            out_content = response.content
+                            return out_url, out_content
 
-            # Otherwise
-            sc_url = self.create_subconverter_url(url, self.__sc_host, list)
+            # use subconverter
+            sc_url = self.create_subconverter_url(url, self.__sc_host, list, rename)
             with self.__session.get(sc_url) as response:
                 yaml_data = ruamel.yaml.safe_load(response.content.decode("utf-8"))
                 if self.is_clash_yaml(yaml_data):
@@ -86,18 +87,21 @@ class ClashUtil():
                 else:
                     out_url = sc_url
                     out_content = None
-        except requests.exceptions.RequestException as e:
-            print("requests exceptions：", e)
+        except Exception as e:
+            print("exceptions：", e)
             return None, None
 
         return out_url, out_content
 
     @staticmethod
-    def create_subconverter_url(url, host, list=False):
+    def create_subconverter_url(url, host, list=False, rename=None):
         encoded_url = urllib.parse.quote(url, safe="")
         subconverter_url = r"{}".format(f"https://{host}/sub?target=clash&url={encoded_url}")
         if list:
             subconverter_url += r"&list=true"
+        if rename:
+            encode_rename = urllib.parse.quote(rename, safe="")
+            subconverter_url += r"&rename={}".format(encode_rename)
         return subconverter_url
 
     @staticmethod
@@ -129,7 +133,7 @@ class ClashUtil():
         failed_urls = []
         if self.__sc_host:
             for i, url in enumerate(urls):
-                out_url, out_content = self.convert_to_clash_yaml_url(url, list=True)
+                out_url, out_content = self.convert_to_clash_yaml_url(url, must_use_sc_host=True, list=True)
                 if out_content:
                     proxy_urls.append(out_url)
                 else:
@@ -144,65 +148,15 @@ class ClashUtil():
 
         # ## proxy-providers
         pp_section_name = "proxy-providers"
-        tpl_provider_data = tpl_yaml_data[pp_section_name]["provider"]
-        for i, pu in enumerate(proxy_urls):
-            new_provider_data = copy.deepcopy(tpl_provider_data)
-            name = f"provider{i}"
-            new_provider_data["url"] = pu
-            new_provider_data["path"] = f"proxy-providers/tpl/{name}.yaml"
-
-            out_yaml_data[pp_section_name][name] = new_provider_data
-
-        del out_yaml_data[pp_section_name]["provider"]
-
+        provider_data, provider_names = self.__create_providers_base_on_tpl(proxy_urls, tpl_yaml_data[pp_section_name])
+        out_yaml_data[pp_section_name] = provider_data
+        
         # ## proxy-groups
         pg_section_name = "proxy-groups"
-        provider_names = []
-        select_group_names = []
-        auto_group_names = []
-        for i in range(0, len(out_yaml_data[pp_section_name])):
-            pv_name = f"provider{i}"
-            provider_names.append(pv_name)
-            sg_name = f"Group{i}Select"
-            select_group_names.append(sg_name)
-            ag_name = f"Group{i}Auto"
-            auto_group_names.append(ag_name)
+        new_group_data = self.__create_proxy_groups_base_on_tpl(provider_names, tpl_yaml_data[pg_section_name])
+        out_yaml_data[pg_section_name] = new_group_data
 
-        def create_pg_groups_by_tpl(tpl_group_name, group_names, provider_names):
-            index_of_tpl_group = next(\
-                (i for i, g in enumerate(out_yaml_data[pg_section_name]) if g["name"] == tpl_group_name), None)
-            if not index_of_tpl_group:
-                sys.stderr.print(f"{group_name} not found.")
-            tpl_group = out_yaml_data[pg_section_name][index_of_tpl_group]
-            new_groups = []
-            for g_name, pv_name in zip(group_names, provider_names):
-                new_group_data = copy.deepcopy(tpl_group)
-                new_group_data["name"] = g_name
-                new_group_data["use"] = [pv_name]
-                new_groups.append(new_group_data)
-            out_yaml_data[pg_section_name][index_of_tpl_group + 1 : index_of_tpl_group + 1] = new_groups
-            del out_yaml_data[pg_section_name][index_of_tpl_group]
-
-        # ### GroupSelect
-        create_pg_groups_by_tpl("GroupSelect", select_group_names, provider_names)
-        create_pg_groups_by_tpl("GroupAuto", auto_group_names, provider_names)
-
-        # ## Repalce select_groups, auto_groups, providers
-        def replace_special_key_in_proxy_groups(special_key, replace_value, key, group):
-            value = group.get(key)
-            if not value:
-                return False
-            for i, group_name in enumerate(value):
-                if group_name == special_key:
-                    group[key][i + 1 : i + 1] = replace_value
-                    del group[key][i]
-                    break
-
-        for group in out_yaml_data[pg_section_name]:
-            replace_special_key_in_proxy_groups("<select_groups>", select_group_names, "proxies", group)
-            replace_special_key_in_proxy_groups("<auto_groups>", auto_group_names, "proxies", group)
-            replace_special_key_in_proxy_groups("<providers>", provider_names, "use", group)
-
+        os.makedirs(os.path.dirname(out_yaml_path), exist_ok=True)
         with open(out_yaml_path, "w", encoding="utf-8", newline="") as f:
                 yaml = ruamel.yaml.YAML()
                 #yaml.indent(mapping=2, sequence=4, offset=2)
@@ -236,3 +190,65 @@ class ClashUtil():
                 if i and not i.startswith("#"):
                     urls.append(r"{}".format(i))
         return urls
+
+    @staticmethod
+    def __create_providers_base_on_tpl(proxy_urls, tpl_proxy_providers):
+        provider_names = {}
+        new_provider_data = {}
+        for name, value in tpl_proxy_providers.items():
+            if "tpl_param" not in value:
+                new_provider_data[name] = value
+                continue
+            
+            provider_names[name] = []
+            for i, u in enumerate(proxy_urls):
+                n = f"{name}{i}"
+                provider_names[name].append(n)
+                new_provider_data[n] = copy.deepcopy(value)
+                rename = r"{}".format(f"(^.*$)@{name}\|$1")
+                encode_rename = urllib.parse.quote(rename, safe="")
+                new_provider_data[n]["url"] = f'{u}&rename={encode_rename}'
+                new_provider_data[n]["path"] = f"proxy-providers/tpl/{n}.yaml"
+                del new_provider_data[n]["tpl_param"]
+
+        return new_provider_data, provider_names
+    
+    @staticmethod
+    def __create_proxy_groups_base_on_tpl(provider_names, tpl_proxy_groups):
+        new_group_names = {}
+        new_group_data = []
+        for i, group in enumerate(tpl_proxy_groups):
+            if "tpl_param" not in group:
+                new_group_data.append(group)
+                continue
+            
+            new_group_names[group["name"]] = []
+            for pn in group["tpl_param"]["providers"]:
+                for n in provider_names[pn]:
+                    name = f'{group["name"]}-{n}'
+                    new_group_names[group["name"]].append(name)
+                    new_group = copy.deepcopy(group)
+                    new_group["name"] = name
+                    new_group["use"] = [n]
+                    del new_group["tpl_param"]
+
+                    new_group_data.append(new_group)
+
+        ClashUtil.__replace_special_key_in_proxy_groups(provider_names, new_group_names, new_group_data)
+
+        return new_group_data
+
+    @staticmethod
+    def __replace_special_key_in_proxy_groups(provider_names, new_group_names, group_data):
+        for group in group_data:
+            def replace_special_key(replaced_key, replace_data):
+                new_value_data = []
+                if replaced_key in group:
+                    for i in group[replaced_key]:
+                        if i.startswith("<") and i.endswith(">") and i[1:-1] in replace_data:
+                            new_value_data.extend(replace_data[i[1:-1]])
+                        else:
+                            new_value_data.append(i)
+                    group[replaced_key] = new_value_data
+            replace_special_key("use", provider_names)
+            replace_special_key("proxies", new_group_names)

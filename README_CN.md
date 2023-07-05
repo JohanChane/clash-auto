@@ -86,59 +86,68 @@ sc_host: 表示订阅转换的后端地址。在转换 url 时, 如果发现 url
 
 比如:
 
-tpl_clash_config.yaml
+tpl_basic.yaml
 
 ```yaml
 proxy-groups:
-  - name: "LastMatch"
-    type: select
-    proxies:
-      - DIRECT
-      - Entry
-
   - name: "Entry"
     type: select
     proxies:
       - AllAuto
       - AllSelect
-      # Group0Select, Group1Select, ...
-      - <select_groups>
-    url: 'http://www.gstatic.com/generate_204'
+      # 使用名为 "Auto" 组下的所有组
+      - <Auto>
+    url: http://www.gstatic.com/generate_204
     interval: 300
 
   - name: "AllSelect"
     type: select
     use:
-      # provider0, provider1, ...
-      - <providers>
-    url: 'http://www.gstatic.com/generate_204'
+      # 使用名为 "provider" 下的 providers
+      - <provider>
+    url: http://www.gstatic.com/generate_204
     interval: 300
 
   - name: "AllAuto"
     type: url-test
     proxies:
-      # Group0Auto, Group1Auto, ...
-      - <auto_groups>
-    url: 'http://www.gstatic.com/generate_204'
+      - <Auto>
+    url: http://www.gstatic.com/generate_204
     interval: 30
 
-  # Select Group Template
-  - name: "GroupSelect"
+  # 为模板名为 "provider" 下的 providres 生成组
+  - name: "Select"
+    tpl_param:
+      providers: ["provider"]
     type: select
     use: null
-    url: 'http://www.gstatic.com/generate_204'
+    url: http://www.gstatic.com/generate_204
     interval: 300
 
-  # Auto Group Template
-  - name: "GroupAuto"
+  - name: "Auto"
+    tpl_param:
+      providers: ["provider"]
     type: url-test
     use: null
-    url: 'http://www.gstatic.com/generate_204'
+    url: http://www.gstatic.com/generate_204
     interval: 300
 
+  - name: "RuleMode"
+    type: select
+    proxies:
+      - DIRECT
+      - Entry
+
+  - name: "RuleMode-LastMatch"
+    type: select
+    proxies:
+      - Entry
+      - DIRECT
+
 proxy-providers:
-  # provider template
+  # 为所有 url 生成 providers
   provider:
+    tpl_param:
     type: http
     url: null
     path: null
@@ -156,21 +165,17 @@ https://example1.com
 https://example2.com
 ```
 
-tpl_out_clash_config.yaml
+生成的 tpl_basic.yaml
 
 ```yaml
-- name: LastMatch
-  type: select
-  proxies:
-  - DIRECT
-  - Entry
+proxy-groups:
 - name: Entry
   type: select
   proxies:
   - AllAuto
   - AllSelect
-  - Group0Select
-  - Group1Select
+  - Auto-provider0
+  - Auto-provider1
   url: http://www.gstatic.com/generate_204
   interval: 300
 - name: AllSelect
@@ -183,38 +188,49 @@ tpl_out_clash_config.yaml
 - name: AllAuto
   type: url-test
   proxies:
-  - Group0Auto
-  - Group1Auto
+  - Auto-provider0
+  - Auto-provider1
   url: http://www.gstatic.com/generate_204
   interval: 30
-- name: Group0Select
+- name: Select-provider0
   type: select
   use:
   - provider0
   url: http://www.gstatic.com/generate_204
   interval: 300
-- name: Group0Auto
-  type: url-test
-  use:
-  - provider0
-  url: http://www.gstatic.com/generate_204
-  interval: 300
-- name: Group1Select
+- name: Select-provider1
   type: select
   use:
   - provider1
   url: http://www.gstatic.com/generate_204
   interval: 300
-- name: Group1Auto
+- name: Auto-provider0
+  type: url-test
+  use:
+  - provider0
+  url: http://www.gstatic.com/generate_204
+  interval: 300
+- name: Auto-provider1
   type: url-test
   use:
   - provider1
   url: http://www.gstatic.com/generate_204
   interval: 300
+- name: RuleMode
+  type: select
+  proxies:
+  - DIRECT
+  - Entry
+- name: RuleMode-LastMatch
+  type: select
+  proxies:
+  - Entry
+  - DIRECT
 proxy-providers:
   provider0:
     type: http
-    url: https://example1.com       # 或者是用 SubConverter 转换后的 url
+    url: 
+      https://example1.com
     path: proxy-providers/tpl/provider0.yaml
     interval: 3600
     health-check:
@@ -223,7 +239,8 @@ proxy-providers:
       url: http://www.gstatic.com/generate_204
   provider1:
     type: http
-    url: https://example2.com
+    url: 
+      https://example1.com
     path: proxy-providers/tpl/provider1.yaml
     interval: 3600
     health-check:
@@ -245,61 +262,30 @@ dns:
   enable: true
   listen: 0.0.0.0:53
   ipv6: false
-  default-nameserver:
-    - 119.29.29.29
-    #- 223.5.5.5
-    #- 180.76.76.76
-    - 114.114.114.114
-    #- 8.8.8.8
+  #default-nameserver:
+  #  - 114.114.114.114
+  #  #- 8.8.8.8
   enhanced-mode: fake-ip
   nameserver:
-    - 119.29.29.29
-    #- 223.5.5.5
-    #- 180.76.76.76
+    - 223.5.5.5
     - 114.114.114.114
     #- 8.8.8.8
-    - tls://dns.rubyfish.cn:853 # DNS over TLS
-    - https://1.1.1.1/dns-query # DNS over HTTPS
-    - dhcp://en0 # dns from dhcp
+    #- tls://dns.rubyfish.cn:853 # DNS over TLS
+    #- https://1.1.1.1/dns-query # DNS over HTTPS
   fallback:
-      - https://8888.google/dns-query
-      - https://1.0.0.1/dns-query
-      - https://dns.twnic.tw/dns-query
-      - https://doh.opendns.com/dns-query
-      - https://dns-nyc.aaflalo.me/dns-query
-      - https://dns.aa.net.uk/dns-query
-      - https://sg.adhole.org/dns-query
-      - https://kaitain.restena.lu/dns-query
-      - https://hydra.plan9-ns1.com/dns-query
-      - https://jp.tiar.app/dns-query
-      - https://doh.asia.dnswarden.com/adblock
+    - https://8888.google/dns-query
+    - https://1.0.0.1/dns-query
   fallback-filter:
     geoip: true
-    geoip-code: CN
     ipcidr:
-      - 0.0.0.0/8
-      - 10.0.0.0/8
-      - 100.64.0.0/10
-      - 127.0.0.0/8
-      - 169.254.0.0/16
-      - 172.16.0.0/12
-      - 192.0.0.0/24
-      - 192.0.2.0/24
-      - 192.88.99.0/24
-      - 192.168.0.0/16
-      - 198.18.0.0/15
-      - 198.51.100.0/24
-      - 203.0.113.0/24
-      - 224.0.0.0/4
-      - 240.0.0.0/4
-      - 255.255.255.255/32
-    domain:
-      - '+.google.com'
-      - '+.facebook.com'
-      - '+.youtube.com'
-      - "+.github.com"
-      - "+.githubusercontent.com"
-      - "+.googlevideo.com"
+      #- 240.0.0.0/4
+    #domain:
+    #  - '+.google.com'
+    #  - '+.facebook.com'
+    #  - '+.youtube.com'
+    #  - "+.github.com"
+    #  - "+.githubusercontent.com"
+    #  - "+.googlevideo.com"
 
 tun:
   enable: true
@@ -309,6 +295,7 @@ tun:
     - tcp://any:53
   auto-route: true
   auto-detect-interface: true # conflict with interface-name
+
 ```
 
 关闭 Tun: 修改这些字段即可。

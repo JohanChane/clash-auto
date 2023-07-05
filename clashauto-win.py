@@ -174,8 +174,14 @@ def main():
         elif choiced_option == "test_config":
             clash_server_ctl(ServerCmd.TEST)
         elif choiced_option == "create_yaml":
-            tpl_config_path = "tpl/tpl_clash_config.yaml"
-            tpl_out_config_path = "tpl/tpl_out_clash_config.yaml"
+            file_names = get_file_names(os.path.join(SCRIPT_PATH, "tpl"))
+            file_names = [i for i in file_names if os.path.splitext(i)[1] == ".yaml"]
+            index = select(file_names)
+            if index >= len(file_names):
+                print("backward")
+                continue
+            tpl_config_path = f"tpl/{file_names[index]}"
+            tpl_out_config_path = f"tpl/out/{file_names[index]}"
             url_path = "tpl/proxy_provider_urls"
             urls = ClashUtil.extra_urls(url_path)
             proxy_urls, failed_urls = clash_util.create_yaml_base_on_tpl(urls, tpl_config_path, tpl_out_config_path)
