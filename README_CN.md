@@ -1,5 +1,12 @@
 # Clash Auto
 
+## 特点
+
+-   通过自身代理来更新配置而不是直连。
+-   可定义配置模块来生成 Clash 配置。对于有多个订阅链接的用户可以将所有订阅合并到一个配置文件, 而且订阅之间不混乱。
+-   可自定义后端地址将订阅链接转换为 Clash 配置。
+-   小巧高效。平时只需运行一个 Clash Server 在后台。ClashAuto 要用时再打开即可。
+
 ## 支持的平台
 
 -   Windows
@@ -27,9 +34,9 @@
 -   basic_clash_config.yaml: 用于配置 clash 的基础配置。修改该文件后, 记得重启 clashauto.bat
 -   final_clash_config.yaml: 通过 basic_clash_config 和 profile 文件合并后配置文件, clash 是用这个配置文件启动的。
 -   tpl: 用于根据 Clash 模板配置文件生成新的配置文件。
-    -   tpl_clash_config.yaml: Clash 模板配置文件
     -   proxy_provider_urls: 放置有 proxies 字段的 Clash 配置。
-    -   tpl_out_clash_config.yaml: 生成的配置文件
+    -   .yaml 文件: Clash 模板配置文件
+    -   out 目录: 放置生成的配置文件
 
 ### clashauto.bat 的选项
 
@@ -86,7 +93,8 @@ sc_host: 表示订阅转换的后端地址。在转换 url 时, 如果发现 url
 
 比如:
 
-tpl_basic.yaml
+<details>
+<summary> tpl_basic.yaml </summary>
 
 ```yaml
 proxy-groups:
@@ -158,14 +166,20 @@ proxy-providers:
       url: http://www.gstatic.com/generate_204
 ```
 
-proxy_provider_urls (如果这些 url 的内容如果没有 proxies 的内容, 会使用 SubConverter 来转换。)
+</details>
+
+<details>
+<summary> proxy_provider_urls (如果这些 url 的内容如果没有 proxies 的内容, 会使用 SubConverter 来转换。) </summary>
 
 ```yaml
 https://example1.com
 https://example2.com
 ```
 
-生成的 tpl_basic.yaml
+</details>
+
+<details>
+<summary> 生成的 tpl_basic.yaml </summary>
 
 ```yaml
 proxy-groups:
@@ -249,13 +263,16 @@ proxy-providers:
       url: http://www.gstatic.com/generate_204
 ```
 
+</details>
+
 会将合并后的文件复制到 profiles 目录, 然后更新并选择这个 profile 即可。
 
 ### 启用/关闭 Tun 模式
 
 配置 `basic_clash_config.yaml` 的 dns 和 tun 字段, 重启 Clash Auto 再 select_profile 即可。可查找相关文档进行配置。
 
-启用 Tun 模式: 
+<details>
+<summary> 启用 Tun 模式: </summary>
 
 ```yaml
 dns:
@@ -297,6 +314,8 @@ tun:
   auto-detect-interface: true # conflict with interface-name
 
 ```
+
+</details>
 
 关闭 Tun: 修改这些字段即可。
 
