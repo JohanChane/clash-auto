@@ -205,7 +205,7 @@ class ClashUtil():
                 n = f"{name}{i}"
                 provider_names[name].append(n)
                 new_provider_data[n] = copy.deepcopy(value)
-                rename = r"{}".format(f"(^.*$)@{name}\|$1")
+                rename = r"{}".format(f"(^.*$)@{n}\|$1")
                 encode_rename = urllib.parse.quote(rename, safe="")
                 new_provider_data[n]["url"] = f'{u}&rename={encode_rename}'
                 new_provider_data[n]["path"] = f"proxy-providers/tpl/{n}.yaml"
