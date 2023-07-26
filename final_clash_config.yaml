@@ -65,5 +65,6 @@ tun:
   dns-hijack:
     - any:53
     - tcp://any:53
-  auto-route: true
+  auto-route: true # manage `ip route` and `ip rules`
+  auto-redir: true # manage nftable REDIRECT
   auto-detect-interface: true # conflict with interface-name

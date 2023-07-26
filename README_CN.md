@@ -27,16 +27,17 @@
 
 ### 软件的文件的作用
 
--   clashauto.bat: 用于管理 clash 服务。
--   config.ini: Clash Auto 的配置。
--   config: 是 clash 的配置目录。
--   profiles: 用于放置 profile 文件。
--   basic_clash_config.yaml: 用于配置 clash 的基础配置。修改该文件后, 记得重启 clashauto.bat
+-   clashauto.bat: 启动 Windows 平台的 ClashAuto
+-   clashauto: 启动 Linux 平台的 ClashAuto
+-   data: 放置用户的数据。
+    -   config.ini: ClashAuto 的配置。
+    -   profiles: 用于放置 profile 文件。
+    -   basic_clash_config.yaml: 用于配置 clash 的基础配置。修改该文件后, 记得重启 clashauto.bat
+    -   tpl: 用于根据 Clash 模板配置文件生成新的配置文件。
+        -   proxy_provider_urls: 放置有 proxies 字段的 Clash 配置。
+        -   .yaml 文件: Clash 模板配置文件
 -   final_clash_config.yaml: 通过 basic_clash_config 和 profile 文件合并后配置文件, clash 是用这个配置文件启动的。
--   tpl: 用于根据 Clash 模板配置文件生成新的配置文件。
-    -   proxy_provider_urls: 放置有 proxies 字段的 Clash 配置。
-    -   .yaml 文件: Clash 模板配置文件
-    -   out 目录: 放置生成的配置文件
+-   clash_config: 是 clash 的配置目录。
 
 ### clashauto.bat 的选项
 
@@ -75,6 +76,7 @@
 -   restart/stop/config/install/uninstall clash_service: 都是用于操作 clash 服务。
 -   test_config: 测试 `final_clash_config.yaml` 配置文件。
 -   create_yaml: 用于根据 Clash 模板配置文件生成新的配置文件。
+-   tun_mode: 启用/关闭 tun 模式
 -   uwp_loopback: 允许应用程序在本地回环地址（loopback address）上进行网络通信。为了增强应用程序的安全性，Microsoft 在默认情况下禁用了微软商店的应用在本地回环地址上进行网络通信的功能。
 
 *Clash Auto 会使用自身作为代理来更新 clash 配置文件的依赖和更新 clash 的配置文件。*
@@ -86,6 +88,7 @@
 ### Clash Auto 的配置
 
 sc_host: 表示订阅转换的后端地址。在转换 url 时, 如果发现 url 的内容不是 Clash 配置, 则使用订阅转换来转换该 url。
+tun_mode: 表示启动/关闭 tun 模式。
 
 ### 根据模板配置生成新的配置
 
@@ -267,64 +270,9 @@ proxy-providers:
 
 会将合并后的文件复制到 profiles 目录, 然后更新并选择这个 profile 即可。
 
-### 启用/关闭 Tun 模式
+## 更新 ClashAuto
 
-配置 `basic_clash_config.yaml` 的 dns 和 tun 字段, 重启 Clash Auto 再 select_profile 即可。可查找相关文档进行配置。
-
-<details>
-<summary> 启用 Tun 模式: </summary>
-
-```yaml
-dns:
-  enable: true
-  listen: 0.0.0.0:53
-  ipv6: false
-  #default-nameserver:
-  #  - 114.114.114.114
-  #  #- 8.8.8.8
-  enhanced-mode: fake-ip
-  nameserver:
-    - 223.5.5.5
-    - 114.114.114.114
-    #- 8.8.8.8
-    #- tls://dns.rubyfish.cn:853 # DNS over TLS
-    #- https://1.1.1.1/dns-query # DNS over HTTPS
-  fallback:
-    - https://8888.google/dns-query
-    - https://1.0.0.1/dns-query
-  fallback-filter:
-    geoip: true
-    ipcidr:
-      #- 240.0.0.0/4
-    #domain:
-    #  - '+.google.com'
-    #  - '+.facebook.com'
-    #  - '+.youtube.com'
-    #  - "+.github.com"
-    #  - "+.githubusercontent.com"
-    #  - "+.googlevideo.com"
-
-tun:
-  enable: true
-  stack: system # or gvisor
-  dns-hijack:
-    - any:53
-    - tcp://any:53
-  auto-route: true
-  auto-detect-interface: true # conflict with interface-name
-
-```
-
-</details>
-
-关闭 Tun: 修改这些字段即可。
-
-```yaml
-dns:
-  enable: disable
-tun:
-  enable: disable
-```
+从 Release 下载软件, 解压软件压缩包, 然后将之前的 data 的文件 (选择自己需要的) 复制到安装目录下即可。
 
 ## Q&A
 

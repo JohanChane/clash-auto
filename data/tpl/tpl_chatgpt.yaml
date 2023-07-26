@@ -1,11 +1,3 @@
-#port: 7890
-#socks-port: 7891
-#redir-port: 7892
-#tproxy-port: 7893
-mixed-port: 7890
-
-#authentication:
-# - "user1:pass1"
 # - "user2:pass2"
 
 allow-lan: false
@@ -65,7 +57,8 @@ tun:
   dns-hijack:
     - any:53
     - tcp://any:53
-  auto-route: true
+  auto-route: true # manage `ip route` and `ip rules`
+  auto-redir: true # manage nftable REDIRECT
   auto-detect-interface: true # conflict with interface-name
 
 proxy-groups:
@@ -75,6 +68,7 @@ proxy-groups:
       - AllAuto
       - AllSelect
       - <Auto>
+      - <Select>
     url: http://www.gstatic.com/generate_204
     interval: 300
 
@@ -93,20 +87,6 @@ proxy-groups:
     url: https://api.openai.com/v1/ping
     interval: 300
 
-  - name: "AllSelect"
-    type: select
-    use:
-      - <provider>
-    url: http://www.gstatic.com/generate_204
-    interval: 300
-
-  - name: "AllAuto"
-    type: url-test
-    proxies:
-      - <Auto>
-    url: http://www.gstatic.com/generate_204
-    interval: 30
-
   - name: "ChatGptSelect"
     tpl_param:
       providers: ["chatgpt"]
@@ -114,6 +94,28 @@ proxy-groups:
     use: null
     url: https://api.openai.com/v1/ping
     interval: 300
+
+  - name: "AllSelect"
+    type: select
+    use:
+      - <provider>
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+
+  - name: "Select"
+    tpl_param:
+      providers: ["provider"]
+    type: select
+    use: null
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+
+  - name: "AllAuto"
+    type: url-test
+    proxies:
+      - <Auto>
+    url: https://www.gstatic.com/generate_204     # use https
+    interval: 30
 
   - name: "Auto"
     tpl_param:
@@ -269,7 +271,7 @@ rules:
   - DOMAIN,aur.archlinux.org,Entry
   #- DOMAIN-KEYWORD,speedtest,Entry
 
-  # ## 订阅转换
+  # ## Sub Convert
   #- DOMAIN-SUFFIX,suo.yt,Entry
   #- DOMAIN-SUFFIX,bianyuan.xyz,Entry
   #- DOMAIN-SUFFIX,sub.xeton.dev,Entry

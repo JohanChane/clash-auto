@@ -252,3 +252,28 @@ class ClashUtil():
                     group[replaced_key] = new_value_data
             replace_special_key("use", provider_names)
             replace_special_key("proxies", new_group_names)
+
+    @staticmethod
+    def tun_ctl(enable, config_path):
+        with open(config_path, "r", encoding="utf-8") as f:
+            yaml_data = ruamel.yaml.safe_load(f)
+
+        try:
+            yaml_data.get("tun").get("enable")
+            does_have_tun = True
+        except Exception as e:
+            does_have_tun = False
+        try:
+            yaml_data.get("dns").get("enable")
+            does_have_dns = True
+        except Exception as e:
+            does_have_dns = False
+    
+        if does_have_tun:
+            yaml_data["tun"]["enable"] = enable
+        if does_have_dns:
+            yaml_data["dns"]["enable"] = enable
+
+        with open(config_path, "w", encoding="utf-8", newline="") as f:
+            yaml = ruamel.yaml.YAML()
+            yaml.dump(yaml_data, f)
