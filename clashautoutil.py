@@ -60,7 +60,7 @@ class ClashUtil():
         return net_res
 
     def fetch_sub_url(self, url, list=False, rename=None):
-        out_url, out_conent = self.convert_to_clash_yaml_url(url, list=True)
+        out_url, out_conent = self.convert_to_clash_yaml_url(url, list=list, rename=rename)
         return out_url, out_conent
 
     def convert_to_clash_yaml_url(self, url, *, must_use_sc_host=False, list=False, rename=None):
