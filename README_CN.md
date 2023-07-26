@@ -290,33 +290,23 @@ A: 设置 Windows 防火墙, 使 clash.exe 允许通过防火墙。
 
 比如:
 
-1.  安装 Clash。并确保有 clash server unit (`systemctl cat clash` 可以查看)。
-    -   比如: `yay -S clash-premium-bin`
-    -   或者 [Clash Tun](https://github.com/Kr328/clash-premium-installer)
-2.  将 clash-auto 软件包解压到 `/opt/clash-auto`, 或者其他地方。
-3.  [optional] 将 clashauto 放入 PATH。
-
-    ```sh
-    chmod a+x /opt/clash-auto/clashauto
-    ln -sf /opt/clash-auto/clashauto /usr/bin/clashauto。
-    ```
-
-4.  运行 `clashauto`, 选择 config_clash_server。
+1.  安装 Clash premium。并确保有 clash server unit (`systemctl cat clash@` 可以查看)。比如 ArchLinux: `yay -S clash-premium-bin`
+2.  运行 `clashauto`, 选择 config_clash_server。
 
     ```
     [Service]
     # 删除原先的 ExecStart
     ExecStart=
-    # 修改 `-d, -f` 参数。这里我是使用 Clash Tun, 所以前面有 bypass-proxy。
-    ExecStart=/usr/bin/bypass-proxy /usr/bin/clash -d /opt/clash-auto/config -f /opt/clash-auto/final_clash_config.yaml
+    # 修改 `-d, -f` 参数。
+    ExecStart=/usr/bin/clash -d /opt/clash-auto/clash_config -f /opt/clash-auto/final_clash_config.yaml
     ```
 
-5.  修改 `/opt/clash-auto/config` 的文件属性
+3.  修改 `/opt/clash-auto/clash_config` 的文件属性
 
     ```sh
     cd /opt/clash-auto
-    sudo chown root:<your user name> config
-    sudo chmod g+w config
+    sudo chown root:<your user name> clash_config
+    sudo chmod g+w clash_config
     ```
 
 ### 使用
