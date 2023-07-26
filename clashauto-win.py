@@ -185,7 +185,6 @@ def main():
             print(f'Merged "{BASIC_CLASH_CONFIG_PATH}" and "{profile_path}" into "{FINAL_CLASH_CONFIG_PATH}"')
 
             tun_mode = config.getboolean("main", "tun_mode", fallback=None)
-            print(tun_mode)
             if tun_mode:
                 ClashUtil.tun_ctl(enable=True, config_path=FINAL_CLASH_CONFIG_PATH)
             else:
