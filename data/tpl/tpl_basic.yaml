@@ -110,13 +110,13 @@ proxy-groups:
     url: http://www.gstatic.com/generate_204
     interval: 300
 
-  - name: "RuleMode"
+  - name: "Entry-RuleMode"
     type: select
     proxies:
       - DIRECT
       - Entry
 
-  - name: "RuleMode-LastMatch"
+  - name: "Entry-LastMatch"
     type: select
     proxies:
       - Entry
@@ -256,13 +256,12 @@ rules:
   - RULE-SET,reject,REJECT
   - RULE-SET,gfw,Entry
   - RULE-SET,telegramcidr,Entry
+  - RULE-SET,cncidr,Entry-RuleMode
+  - RULE-SET,direct,Entry-RuleMode
+  - RULE-SET,icloud,Entry-RuleMode
+  - RULE-SET,apple,Entry-RuleMode
   - RULE-SET,lancidr,DIRECT
-  - GEOIP,LAN,DIRECT
+  #- GEOIP,LAN,DIRECT               # [why need it if has lancidr](https://github.com/Loyalsoldier/clash-rules/issues/50)
+  #- GEOIP,CN,Entry-RuleMode        # [why need it if has cncidr](https://github.com/Loyalsoldier/clash-rules/issues/192)
 
-  - RULE-SET,direct,RuleMode
-  - RULE-SET,icloud,RuleMode
-  - RULE-SET,apple,RuleMode
-  - RULE-SET,cncidr,RuleMode
-  - GEOIP,CN,RuleMode
-
-  - MATCH,RuleMode-LastMatch
+  - MATCH,Entry-LastMatch

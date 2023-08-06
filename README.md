@@ -1,57 +1,319 @@
 # Clash Auto
 
-language: [English (out of date)](./README.md) | [中文](./README_CN.md)
+language: [English (out of date)](./README_EN.md) | [中文](./README.md)
 
-## Supported Platforms
+## 特点
 
-- Windows
+-   通过自身代理来更新配置而不是直连。
+-   可定义配置模块来生成 Clash 配置。对于有多个订阅链接的用户可以将所有订阅合并到一个配置文件, 而且订阅之间不混乱。
+-   可自定义后端地址将订阅链接转换为 Clash 配置。
+-   小巧高效。平时只需运行一个 Clash Server 在后台。ClashAuto 要用时再打开即可。
 
-## Dependencies
+## 支持的平台
 
-1. Install Python
-2. Run `pip install ruamel.yaml requests` to install the required Python packages.
+-   Windows
+-   Linux
 
-## Installation
+## 依赖
 
-1. Download the release package (no installation required) from the release page.
-2. Double-click `clashauto.bat` to run the program.
-3. Select `install` to install a startup clash service for Windows.
+1.  安装 python, python-pip
+2.  pip install ruamel.yaml requests
 
-## Usage
+## 安装
 
-### The Purpose of Each File in the Software
+1.  从 release 下载软件包 (免安装)。
+2.  双击运行 `clashauto.bat`。
+3.  选择 `install` 后, Windows 会安装一个开机启动的 clash 服务。
 
-- `clashauto.bat`: Used to manage the clash service.
-- `config`: The configuration directory for clash.
-- `profiles`: Used to store profile files.
-- `basic_clash_config.yaml`: Used to configure basic clash settings. Remember to restart `clashauto.bat` after making changes to this file.
-- `final_clash_config.yaml`: The configuration file used to start clash after merging the `basic_clash_config` and profile files.
+## 使用
 
-### Options in `clashauto.bat`
+### 软件的文件的作用
 
-After double-clicking `clashauto.bat`, you will see the following options:
+-   clashauto.bat: 启动 Windows 平台的 ClashAuto
+-   clashauto: 启动 Linux 平台的 ClashAuto
+-   data: 放置用户的数据。
+    -   config.ini: ClashAuto 的配置。
+    -   profiles: 用于放置 profile 文件。
+    -   basic_clash_config.yaml: 用于配置 clash 的基础配置。修改该文件后, 记得重启 clashauto.bat
+    -   tpl: 用于根据 Clash 模板配置文件生成新的配置文件。
+        -   proxy_provider_urls: 放置有 proxies 字段的 Clash 配置。
+        -   .yaml 文件: Clash 模板配置文件
+-   final_clash_config.yaml: 通过 basic_clash_config 和 profile 文件合并后配置文件, clash 是用这个配置文件启动的。
+-   clash_config: 是 clash 的配置目录。
 
-- `update_final_config`: Update the resources required by `final_clash_config.yaml`.
-- `update_profile_config`:
+### clashauto.bat 的选项
 
-    Update the resources required by profile files. 
+双击运行 `clashauto.bat` 后, 会有如下选项:
+
+-   update_final_config: 表示更新 final_clash_config.yaml 这个文件依赖的资源。
+-   update_profile
+
+    表示更新 profile 文件依赖的资源。
+
+    可以用一个后缀是 `_url` 的文件放置 profile 的链接。它会将链接的内容保存到将 `_url` 为 `.yaml` 的文件。同时会更新该 profile 依赖的资源。
     
-    You can place a file with the suffix `_url` containing a link to a profile. It will save the content of the link to a file with `_url` replaced by `.yaml` and update the resources required by that profile. If the content of the URL is not a Clash configuration file, it can be converted into a Clash configuration file through some subscription conversion websites, such as https://acl4ssr-sub.github.io/.
+    如果链接的内容不是一个 clash 配置文件, 可以通过一些订阅转换网站转换成 clash 的配置。比如: https://acl4ssr-sub.github.io/
+    
+    比如:
 
-- `select_profile`: Select a profile and merge it with `basic_clash_config.yaml` to generate `final_clash_config.yaml`. Then restart the clash service to make the new configuration take effect.
-- `restart/stop/config/install/uninstall`: Used to manage the clash service.
+    profiles/example_url
+    
+    ```
+    <your clash config url>
+    ```
+    
+    同时也支持 `vmess://, trojan://` 等开头的链接并且可以将它们一起放在一个 url 文件。比如:
+    
+    profiles/example_url
 
-*Clash Auto uses its own proxy to update the dependencies of the clash configuration file and update the clash configuration file itself.*
+    ```
+    <your clash config url>
+    vmess://...
+    trojan://...
+    ```
+    
+    选择该选项后会将 url 的内容保存到 profiles/example.yaml, 且更新该配置依赖的资源。更新成功后, 用户在 select_profile 选项中选择该配置即可。
+    
+-   select_profile: 表示选择一个 `profile` 和 `basic_clash_config.yaml` 合并到 `final_clash_config.yaml`。同时重启 clash 服务使配置文件生效。
+-   restart/stop/config/install/uninstall clash_service: 都是用于操作 clash 服务。
+-   test_config: 测试 `final_clash_config.yaml` 配置文件。
+-   create_yaml: 用于根据 Clash 模板配置文件生成新的配置文件。
+-   tun_mode: 启用/关闭 tun 模式
+-   uwp_loopback: 允许应用程序在本地回环地址（loopback address）上进行网络通信。为了增强应用程序的安全性，Microsoft 在默认情况下禁用了微软商店的应用在本地回环地址上进行网络通信的功能。
 
-### Clash Client
+*Clash Auto 会使用自身作为代理来更新 clash 配置文件的依赖和更新 clash 的配置文件。*
 
-Access http://127.0.0.1:9090/ui in your browser to use the client.
+### Clash 的客户端
+
+浏览器访问 http://127.0.0.1:9090/ui 即可。
+
+### Clash Auto 的配置
+
+sc_host: 表示订阅转换的后端地址。在转换 url 时, 如果发现 url 的内容不是 Clash 配置, 则使用订阅转换来转换该 url。
+tun_mode: 表示启动/关闭 tun 模式。
+
+### 根据模板配置生成新的配置
+
+目的: 如何有多个有 proxies 字段的配置合并在一个配置文件中使用时, 一般会为每个配置文件写一个 proxy-provider, Select Group 和 Auto Group。该功能是为每个配置每个文件的生成这些组。
+
+比如:
+
+<details>
+<summary> tpl_basic.yaml </summary>
+
+```yaml
+proxy-groups:
+  - name: "Entry"
+    type: select
+    proxies:
+      - AllAuto
+      - AllSelect
+      # 使用名为 "Auto" 组下的所有组
+      - <Auto>
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+
+  - name: "AllSelect"
+    type: select
+    use:
+      # 使用名为 "provider" 下的 providers
+      - <provider>
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+
+  - name: "AllAuto"
+    type: url-test
+    proxies:
+      - <Auto>
+    url: http://www.gstatic.com/generate_204
+    interval: 30
+
+  # 为模板名为 "provider" 下的 providres 生成组
+  - name: "Select"
+    tpl_param:
+      providers: ["provider"]
+    type: select
+    use: null
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+
+  - name: "Auto"
+    tpl_param:
+      providers: ["provider"]
+    type: url-test
+    use: null
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+
+  - name: "RuleMode"
+    type: select
+    proxies:
+      - DIRECT
+      - Entry
+
+  - name: "RuleMode-LastMatch"
+    type: select
+    proxies:
+      - Entry
+      - DIRECT
+
+proxy-providers:
+  # 为所有 url 生成 providers
+  provider:
+    tpl_param:
+    type: http
+    url: null
+    path: null
+    interval: 3600
+    health-check:
+      enable: true
+      interval: 600
+      url: http://www.gstatic.com/generate_204
+```
+
+</details>
+
+<details>
+<summary> proxy_provider_urls (如果这些 url 的内容如果没有 proxies 的内容, 会使用 SubConverter 来转换。) </summary>
+
+```yaml
+https://example1.com
+https://example2.com
+```
+
+</details>
+
+<details>
+<summary> 生成的 tpl_basic.yaml </summary>
+
+```yaml
+proxy-groups:
+- name: Entry
+  type: select
+  proxies:
+  - AllAuto
+  - AllSelect
+  - Auto-provider0
+  - Auto-provider1
+  url: http://www.gstatic.com/generate_204
+  interval: 300
+- name: AllSelect
+  type: select
+  use:
+  - provider0
+  - provider1
+  url: http://www.gstatic.com/generate_204
+  interval: 300
+- name: AllAuto
+  type: url-test
+  proxies:
+  - Auto-provider0
+  - Auto-provider1
+  url: http://www.gstatic.com/generate_204
+  interval: 30
+- name: Select-provider0
+  type: select
+  use:
+  - provider0
+  url: http://www.gstatic.com/generate_204
+  interval: 300
+- name: Select-provider1
+  type: select
+  use:
+  - provider1
+  url: http://www.gstatic.com/generate_204
+  interval: 300
+- name: Auto-provider0
+  type: url-test
+  use:
+  - provider0
+  url: http://www.gstatic.com/generate_204
+  interval: 300
+- name: Auto-provider1
+  type: url-test
+  use:
+  - provider1
+  url: http://www.gstatic.com/generate_204
+  interval: 300
+- name: RuleMode
+  type: select
+  proxies:
+  - DIRECT
+  - Entry
+- name: RuleMode-LastMatch
+  type: select
+  proxies:
+  - Entry
+  - DIRECT
+proxy-providers:
+  provider0:
+    type: http
+    url: 
+      https://example1.com
+    path: proxy-providers/tpl/provider0.yaml
+    interval: 3600
+    health-check:
+      enable: true
+      interval: 600
+      url: http://www.gstatic.com/generate_204
+  provider1:
+    type: http
+    url: 
+      https://example1.com
+    path: proxy-providers/tpl/provider1.yaml
+    interval: 3600
+    health-check:
+      enable: true
+      interval: 600
+      url: http://www.gstatic.com/generate_204
+```
+
+</details>
+
+会将合并后的文件复制到 profiles 目录, 然后更新并选择这个 profile 即可。
+
+## 更新 ClashAuto
+
+从 Release 下载软件, 解压软件压缩包, 然后将之前的 data 的文件 (选择自己需要的) 复制到安装目录下即可。
 
 ## Q&A
 
-Q: What should I do if the clash client can connect to the server, but cannot access blocked content?
+Q: 如果 clash 客户端可以连上服务端, 但是无法翻墙?
 
-A: You may need to configure Windows Firewall to allow clash.exe to access the internet.
+A: 设置 Windows 防火墙, 使 clash.exe 允许通过防火墙。
+
+## Linux
+
+### 依赖
+
+和 Windows 平台一样。
+
+### 安装
+
+比如:
+
+1.  安装 Clash premium。并确保有 clash server unit (`systemctl cat clash@` 可以查看)。比如 ArchLinux: `yay -S clash-premium-bin`
+2.  运行 `clashauto`, 选择 config_clash_server。
+
+    ```
+    [Service]
+    # 删除原先的 ExecStart
+    ExecStart=
+    # 修改 `-d, -f` 参数。
+    ExecStart=/usr/bin/clash -d /opt/clash-auto/clash_config -f /opt/clash-auto/final_clash_config.yaml
+    ```
+
+3.  修改 `/opt/clash-auto/clash_config` 的文件属性
+
+    ```sh
+    cd /opt/clash-auto
+    sudo chown root:<your user name> clash_config
+    sudo chmod g+w clash_config
+    ```
+
+### 使用
+
+和 Windows 平台差不多。
 
 ## Screenshots
 
