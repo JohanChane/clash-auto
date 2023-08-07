@@ -2,6 +2,20 @@
 
 language: [English (out of date)](./README_EN.md) | [中文](./README.md)
 
+## 开发此软件的原因
+
+1.  我一般有多个机场链接, 因为有些机场并不能保证 24 小时能上网。所以喜欢将多个机场写在一个配置文件, 方便切换。
+2.  可以用自己的分流规则。这样做会更加安全。再整个黑白名单模式切换。
+    -   黑名单模式好处是省流量, 安全 (不需要走代理的网站不走代理)。坏处是遇到不匹配的网站要切换到白名单模式。
+    -   白名单模式的好处是规则如果没有匹配到该网站时也可以访问, 不用切换模式。坏处是不省流量, 可以不走代理的网站走了代理, 不安全。
+3.  自己写的配置一般会有依赖的网络资源 (比如: `url` 字段) 时, 所以可能会出现这种情况:
+    -   [Clash 更新这些资源是不走代理的。](https://github.com/Dreamacro/clash/issues/2368)
+    -   [[Feature] 让providers可以通过代理来更新](https://github.com/Dreamacro/clash/issues/2046)
+    -   [windows11 error](https://github.com/Fndroid/clash_for_windows_pkg/issues/2384)
+    -   [[Feature] rule-providers 和 proxy-providers 能不能提供选择直连或代理选项](https://github.com/Dreamacro/clash/issues/1385)
+
+我根据自己平时的使用, 开发了这个软件实现了上述的功能和解决了上述的问题。如果你使用 clash 的习惯和我相同, 这个软件应该适合你。
+
 ## 特点
 
 -   通过自身代理来更新配置而不是直连。
