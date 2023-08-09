@@ -73,8 +73,6 @@ proxy-groups:
   - name: "Entry"
     type: select
     proxies:
-      - AllAuto
-      - AllSelect
       - <Auto>
       - <Select>
     url: http://www.gstatic.com/generate_204
@@ -83,31 +81,16 @@ proxy-groups:
   - name: "Entry-ChatGpt"
     type: select
     proxies:
-      - AllSelect-ChatGpt
-      - <ChatGptSelect>
+      - <Select-Chatgpt>
     url: https://api.openai.com/v1/ping
     interval: 300
 
-  - name: "AllSelect-ChatGpt"
-    type: select
-    use:
-      - <chatgpt>
-    url: https://api.openai.com/v1/ping
-    interval: 300
-
-  - name: "ChatGptSelect"
+  - name: "Select-Chatgpt"
     tpl_param:
       providers: ["chatgpt"]
     type: select
     use: null
     url: https://api.openai.com/v1/ping
-    interval: 300
-
-  - name: "AllSelect"
-    type: select
-    use:
-      - <provider>
-    url: http://www.gstatic.com/generate_204
     interval: 300
 
   - name: "Select"
@@ -117,13 +100,6 @@ proxy-groups:
     use: null
     url: http://www.gstatic.com/generate_204
     interval: 300
-
-  - name: "AllAuto"
-    type: url-test
-    proxies:
-      - <Auto>
-    url: https://www.gstatic.com/generate_204     # use https
-    interval: 30
 
   - name: "Auto"
     tpl_param:

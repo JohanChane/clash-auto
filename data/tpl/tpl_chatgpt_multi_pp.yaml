@@ -1,0 +1,306 @@
+#port: 7890
+#socks-port: 7891
+#redir-port: 7892
+#tproxy-port: 7893
+mixed-port: 7890
+
+#authentication:
+# - "user1:pass1"
+# - "user2:pass2"
+
+allow-lan: false
+bind-address: '*'
+mode: rule
+log-level: silent
+ipv6: false
+
+external-controller: 127.0.0.1:9090
+external-ui: yacd
+
+#secret: ""
+
+#interface-name: en0
+
+hosts:
+  #'*.clash.dev': 127.0.0.1
+  #'.dev': 127.0.0.1
+  #'alpha.clash.dev': '::1'
+
+profile:
+  store-selected: true
+
+# ## tun
+dns:
+  enable: true
+  listen: 0.0.0.0:53
+  ipv6: false
+  #default-nameserver:
+  #  - 114.114.114.114
+  #  #- 8.8.8.8
+  enhanced-mode: fake-ip
+  nameserver:
+    - 223.5.5.5
+    - 114.114.114.114
+    #- 8.8.8.8
+    #- tls://dns.rubyfish.cn:853 # DNS over TLS
+    #- https://1.1.1.1/dns-query # DNS over HTTPS
+  fallback:
+    - https://8888.google/dns-query
+    - https://1.0.0.1/dns-query
+  fallback-filter:
+    geoip: true
+    ipcidr:
+      #- 240.0.0.0/4
+    #domain:
+    #  - '+.google.com'
+    #  - '+.facebook.com'
+    #  - '+.youtube.com'
+    #  - '+.github.com'
+    #  - '+.githubusercontent.com'
+    #  - '+.googlevideo.com'
+
+tun:
+  enable: true
+  stack: system # or gvisor
+  dns-hijack:
+    - any:53
+    - tcp://any:53
+  auto-route: true # manage `ip route` and `ip rules`
+  auto-redir: true # manage nftable REDIRECT
+  auto-detect-interface: true # conflict with interface-name
+
+proxy-groups:
+  # ## Entry
+  - name: "Entry"
+    type: select
+    proxies:
+      - AllAuto
+      - AllSelect
+      - <Auto>
+      - <Select>
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+
+  - name: "Entry-ChatGpt"
+    type: select
+    proxies:
+      - AllSelect-ChatGpt
+      - <Select-Chatgpt>
+    url: https://api.openai.com/v1/ping
+    interval: 300
+
+  # ## Select
+  - name: "AllSelect-ChatGpt"
+    type: select
+    use:
+      - <chatgpt>
+    url: https://api.openai.com/v1/ping
+    interval: 300
+
+  - name: "Select-Chatgpt"
+    tpl_param:
+      providers: ["chatgpt"]
+    type: select
+    use: null
+    url: https://api.openai.com/v1/ping
+    interval: 300
+
+  - name: "AllSelect"
+    type: select
+    use:
+      - <provider>
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+
+  - name: "Select"
+    tpl_param:
+      providers: ["provider"]
+    type: select
+    use: null
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+
+  # ## Auto
+  - name: "AllAuto"
+    type: url-test
+    proxies:
+      - <Auto>
+    url: https://www.gstatic.com/generate_204     # use https
+    interval: 30
+
+  - name: "Auto"
+    tpl_param:
+      providers: ["provider"]
+    type: url-test
+    use: null
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+
+  # ## Entry
+  - name: "Entry-RuleMode"
+    type: select
+    proxies:
+      - DIRECT
+      - Entry
+
+  - name: "Entry-LastMatch"
+    type: select
+    proxies:
+      - Entry
+      - DIRECT
+
+proxy-providers:
+  provider:
+    tpl_param:
+    type: http
+    url: null
+    path: null
+    interval: 3600
+    health-check:
+      enable: true
+      interval: 600
+      url: http://www.gstatic.com/generate_204
+
+  chatgpt:
+    tpl_param:
+    type: http
+    url: null
+    path: null
+    interval: 3600
+    health-check:
+      enable: true
+      interval: 600
+      url: https://api.openai.com/v1/ping
+
+rule-providers:
+  reject:
+    type: http
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/reject.txt"
+    path: ./ruleset/reject.yaml
+    interval: 86400
+
+  icloud:
+    type: http
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/icloud.txt"
+    path: ./ruleset/icloud.yaml
+    interval: 86400
+
+  apple:
+    type: http
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/apple.txt"
+    path: ./ruleset/apple.yaml
+    interval: 86400
+
+  #google:
+  #  type: http
+  #  behavior: domain
+  #  url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/google.txt"
+  #  path: ./ruleset/google.yaml
+  #  interval: 86400
+
+  #proxy:
+  #  type: http
+  #  behavior: domain
+  #  url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/proxy.txt"
+  #  path: ./ruleset/proxy.yaml
+  #  interval: 86400
+
+  direct:
+    type: http
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/direct.txt"
+    path: ./ruleset/direct.yaml
+    interval: 86400
+
+  private:
+    type: http
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/private.txt"
+    path: ./ruleset/private.yaml
+    interval: 86400
+
+  gfw:
+    type: http
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/gfw.txt"
+    path: ./ruleset/gfw.yaml
+    interval: 86400
+
+  #greatfire:
+  #  type: http
+  #  behavior: domain
+  #  url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/greatfire.txt"
+  #  path: ./ruleset/greatfire.yaml
+  #  interval: 86400
+
+  #tld-not-cn:
+  #  type: http
+  #  behavior: domain
+  #  url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/tld-not-cn.txt"
+  #  path: ./ruleset/tld-not-cn.yaml
+  #  interval: 86400
+
+  telegramcidr:
+    type: http
+    behavior: ipcidr
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/telegramcidr.txt"
+    path: ./ruleset/telegramcidr.yaml
+    interval: 86400
+
+  cncidr:
+    type: http
+    behavior: ipcidr
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/cncidr.txt"
+    path: ./ruleset/cncidr.yaml
+    interval: 86400
+
+  lancidr:
+    type: http
+    behavior: ipcidr
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/lancidr.txt"
+    path: ./ruleset/lancidr.yaml
+    interval: 86400
+
+  #applications:
+  #  type: http
+  #  behavior: classical
+  #  url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/applications.txt"
+  #  path: ./ruleset/applications.yaml
+  #  interval: 86400
+
+rules:
+  # ## Basic
+  #- PROCESS-NAME,v2ray,DIRECT
+  #- PROCESS-NAME,v2ray.exe,DIRECT
+  - DOMAIN,clash.razord.top,DIRECT
+  - DOMAIN,yacd.haishan.me,DIRECT
+  - DOMAIN-SUFFIX,cn.bing.com,DIRECT
+  - DOMAIN-SUFFIX,bing.com,Entry
+  - DOMAIN-SUFFIX,openai.com,Entry-ChatGpt
+  - DOMAIN,aur.archlinux.org,Entry
+  #- DOMAIN-KEYWORD,speedtest,Entry
+
+  # ## Sub Convert
+  #- DOMAIN-SUFFIX,suo.yt,Entry
+  #- DOMAIN-SUFFIX,bianyuan.xyz,Entry
+  #- DOMAIN-SUFFIX,sub.xeton.dev,Entry
+  #- DOMAIN-SUFFIX,bihai.cf,Entry
+  #- DOMAIN-SUFFIX,sub.id9.cc,Entry
+
+  # ## Clash Rules
+  - RULE-SET,private,DIRECT
+  - RULE-SET,reject,REJECT
+  - RULE-SET,gfw,Entry
+  - RULE-SET,telegramcidr,Entry
+  - RULE-SET,cncidr,Entry-RuleMode
+  - RULE-SET,direct,Entry-RuleMode
+  - RULE-SET,icloud,Entry-RuleMode
+  - RULE-SET,apple,Entry-RuleMode
+  - RULE-SET,lancidr,DIRECT
+  #- GEOIP,LAN,DIRECT               # [why need it if has lancidr](https://github.com/Loyalsoldier/clash-rules/issues/50)
+  #- GEOIP,CN,Entry-RuleMode        # [why need it if has cncidr](https://github.com/Loyalsoldier/clash-rules/issues/192)
+
+  - MATCH,Entry-LastMatch

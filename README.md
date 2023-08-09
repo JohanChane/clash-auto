@@ -52,6 +52,8 @@ language: [English (out of date)](./README_EN.md) | [中文](./README.md)
     -   tpl: 用于根据 Clash 模板配置文件生成新的配置文件。
         -   proxy_provider_urls: 放置有 proxies 字段的 Clash 配置。
         -   .yaml 文件: Clash 模板配置文件
+            -   tpl_basic_single_pp.yaml: 如果只有一个 provider, 可以使用此模板。
+            -   tpl_basic_multi_pp.yaml: 如果有多个 provider, 可以使用此模板。
 -   final_clash_config.yaml: 通过 basic_clash_config 和 profile 文件合并后配置文件, clash 是用这个配置文件启动的。
 -   clash_config: 是 clash 的配置目录。
 
