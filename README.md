@@ -41,6 +41,32 @@ language: [English (out of date)](./README_EN.md) | [中文](./README.md)
 
 ## 使用
 
+### 日常使用
+
+#### 导入机场链接
+
+如果只有一个机场 (有两种方式):
+-   在 `data/profiles` 目录下新建一个后缀为 `_url` 的文件, 将机场链接放入其中。然后更新并选择这个配置即可。
+-   将机场链接放入 `data/tpl/proxy_provider_urls` 中, 然后使用 `create_yaml` 的 `tpl_basic_single_pp.yaml` 模板创建 clash 配置文件。接下来更新并选择生成的配置即可。
+
+如果有两个以上的机场:
+-   将机场链接放入 `data/tpl/proxy_provider_urls` 中, 然后使用 `create_yaml` 的 `tpl_basic_multi_pp.yaml` 模板创建 clash 配置文件。接下来更新并选择生成的配置即可。
+
+#### 更新机场链接
+
+-   如果导入机场链接的方式是, 在 `data/profiles` 目录下新建一个后缀为 `_url` 的文件的方式的, 更新并选择该配置文件即可。
+-   如果导入机场链接的方式是使用模板的, 选择 `update_final_config` 选项即可。
+
+#### clash 的客户端
+
+在浏览器打开 `http://127.0.0.1:9090/ui`。(建议固定该标签页, 这样每次打开浏览器时会自动打开该标签页。)
+
+#### 网站无法访问 (不常见的场景)
+
+假设使用模板生成的配置:
+-   如果只是临时访问该网站, 则可以在 `yacd` 中的 `Entry-RuleMode` 选择 `Entry` (确保旧链接已经断开)。访问完之后, 记得切回原来的选项。
+-   如果是经常要访问该网站, 则可以在模板中为该网站添加 [clash 分流规则](https://dreamacro.github.io/clash/zh_CN/configuration/rules.html#rules-%E8%A7%84%E5%88%99) (一般使用 `DOMAIN-SUFFIX, DOMAIN, DOMAIN-KEYWORD` 即可)。然后使用该模板重新生成的配置。
+
 ### 软件的文件的作用
 
 -   clashauto.bat: 启动 Windows 平台的 ClashAuto
@@ -101,7 +127,7 @@ language: [English (out of date)](./README_EN.md) | [中文](./README.md)
 
 ### Clash 的客户端
 
-浏览器访问 http://127.0.0.1:9090/ui 即可。
+浏览器访问 `http://127.0.0.1:9090/ui` 即可。
 
 ### Clash Auto 的配置
 
