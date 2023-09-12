@@ -2,6 +2,33 @@
 
 language: [English (out of date)](./README_EN.md) | [中文](./README.md)
 
+## 目录
+
+<!-- vim-markdown-toc GFM -->
+
+* [开发此软件的原因](#开发此软件的原因)
+* [特点](#特点)
+* [支持的平台](#支持的平台)
+* [安装](#安装)
+* [使用](#使用)
+    * [日常使用](#日常使用)
+        * [导入机场链接](#导入机场链接)
+        * [更新机场链接](#更新机场链接)
+        * [clash 的客户端](#clash-的客户端)
+        * [网站无法访问 (不常见的场景)](#网站无法访问-不常见的场景)
+    * [软件的文件的作用](#软件的文件的作用)
+    * [clashauto.bat 的选项](#clashautobat-的选项)
+    * [Clash Auto 的配置](#clash-auto-的配置)
+    * [根据模板配置生成新的配置](#根据模板配置生成新的配置)
+* [更新 ClashAuto](#更新-clashauto)
+* [Linux](#linux)
+    * [依赖](#依赖)
+    * [安装](#安装-1)
+    * [使用](#使用-1)
+* [Screenshots](#screenshots)
+
+<!-- vim-markdown-toc -->
+
 ## 开发此软件的原因
 
 1.  我一般有多个机场链接, 因为有些机场并不能保证 24 小时能上网。所以喜欢将多个机场写在一个配置文件, 方便切换。
@@ -28,16 +55,14 @@ language: [English (out of date)](./README_EN.md) | [中文](./README.md)
 -   Windows
 -   Linux
 
-## 依赖
-
-1.  安装 python, python-pip
-2.  pip install ruamel.yaml requests
-
 ## 安装
 
-1.  从 release 下载软件包 (免安装)。
+1.  从 [release](https://github.com/JohanChane/clash-auto/releases) 下载软件包 (免安装)。
 2.  双击运行 `clashauto.bat`。
 3.  选择 `install` 后, Windows 会安装一个开机启动的 clash 服务。
+4.  选择 `test_config`, 让 clash 下载所需要的文件, 比如: `Country.mmdb`。
+
+*手动允许 `clash.exe` 程序通过防火墙。(如果客户端可以访问 clash 服务, 但是不能访问外网的情况下。)*
 
 ## 使用
 
@@ -124,10 +149,6 @@ language: [English (out of date)](./README_EN.md) | [中文](./README.md)
 -   uwp_loopback: 允许应用程序在本地回环地址（loopback address）上进行网络通信。为了增强应用程序的安全性，Microsoft 在默认情况下禁用了微软商店的应用在本地回环地址上进行网络通信的功能。
 
 *Clash Auto 会使用自身作为代理来更新 clash 配置文件的依赖和更新 clash 的配置文件。*
-
-### Clash 的客户端
-
-浏览器访问 `http://127.0.0.1:9090/ui` 即可。
 
 ### Clash Auto 的配置
 
@@ -318,24 +339,39 @@ proxy-providers:
 
 从 Release 下载软件, 解压软件压缩包, 然后将之前的 data 的文件 (选择自己需要的) 复制到安装目录下即可。
 
-## Q&A
-
-Q: 如果 clash 客户端可以连上服务端, 但是无法翻墙?
-
-A: 设置 Windows 防火墙, 使 clash.exe 允许通过防火墙。
-
 ## Linux
 
 ### 依赖
 
-和 Windows 平台一样。
+1.  安装 python, python-pip
+2.  pip install ruamel.yaml requests
 
 ### 安装
 
 比如:
 
 1.  安装 Clash premium。并确保有 clash server unit (`systemctl cat clash@` 可以查看)。比如 ArchLinux: `yay -S clash-premium-bin`
-2.  运行 `clashauto`, 选择 config_clash_server。
+
+    安装之后, `/usr/lib/systemd/system/clash@.server` 内容如下:
+
+    ```
+    [Unit]
+    Description=A rule based proxy in Go for %i.
+    After=network.target
+
+    [Service]
+    Type=exec
+    User=%i
+    Restart=on-abort
+    ExecStart=/usr/bin/clash
+
+    [Install]
+    WantedBy=multi-user.target
+    ```
+ 
+4.  运行 `clashauto`, 选择 config_clash_server。
+
+    修改:
 
     ```
     [Service]
@@ -345,12 +381,12 @@ A: 设置 Windows 防火墙, 使 clash.exe 允许通过防火墙。
     ExecStart=/usr/bin/clash -d /opt/clash-auto/clash_config -f /opt/clash-auto/final_clash_config.yaml
     ```
 
-3.  修改 `/opt/clash-auto/clash_config` 的文件属性
+    或者, 创建文件 `/etc/systemd/system/clash@root.service.d/override.conf`:
 
-    ```sh
-    cd /opt/clash-auto
-    sudo chown root:<your user name> clash_config
-    sudo chmod g+w clash_config
+    ```
+    [Service]
+    ExecStart=
+    ExecStart=/usr/bin/clash -d /opt/clash-auto/clash_config -f /opt/clash-auto/final_clash_config.yaml
     ```
 
 ### 使用

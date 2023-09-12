@@ -2,6 +2,7 @@
 # _*_ coding: UTF-8 _*_
 
 import os, sys, subprocess, shutil, configparser
+sys.path.append(".")
 from enum import Enum
 import ruamel.yaml
 import requests
