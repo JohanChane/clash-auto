@@ -1,5 +1,7 @@
 # Clash Auto
 
+## **该项目不再维护, 请使用 [clashtui](https://github.com/JohanChane/clashtui) 替代。**
+
 language: [English (out of date)](./README_EN.md) | [中文](./README.md)
 
 ## 目录

@@ -137,7 +137,8 @@ class ClashUtil():
                 if out_content:
                     proxy_urls.append(out_url)
                 else:
-                    failed_urls.append(url)
+                    #failed_urls.append(url)
+                    failed_urls.append(out_url)
         else:
             proxy_urls = urls
 
